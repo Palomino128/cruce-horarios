@@ -59,7 +59,7 @@
           <strong>Cursos y Horarios Asignados:</strong>
           <div class="auto-item" *ngFor="let h of docenteHorarios">
             <span>{{ h.curso }}</span>
-            <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }}</span>
+            <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }} ({{ ubicacionAulaCorta(h.aula) }})</span>
           </div>
         </div>
       </div>
@@ -76,8 +76,10 @@
             </select>
           </div>
           <div class="field">
-            <label for="horAula">Aula (A-J + ###)</label>
-            <input id="horAula" type="text" maxlength="4" formControlName="aula" placeholder="A101" />
+            <label for="horAula">Aula (A–I o Sótano con S: ej. AS101, DS201, HS201)</label>
+            <input id="horAula" type="text" maxlength="5" formControlName="aula" placeholder="ej. A101, AS101, HS201" />
+            <small class="hint-sede" *ngIf="infoAulaHorario">{{ infoAulaHorario }}</small>
+            <small class="field-err" *ngIf="alertaAulaHorario">{{ alertaAulaHorario }}</small>
           </div>
         </div>
         <div class="row-2">
@@ -168,7 +170,7 @@
           <strong>Cursos Matriculados:</strong>
           <div class="auto-item" *ngFor="let h of estudianteHorarios">
             <span>{{ h.curso }}</span>
-            <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }}</span>
+            <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }} ({{ ubicacionAulaCorta(h.aula) }})</span>
           </div>
         </div>
       </div>
@@ -311,7 +313,12 @@
             <td><span class="badge badge-navy">{{ r.docenteCodigo }}</span></td>
             <td>{{ r.fecha }}</td>
             <td>{{ r.horaInicio.slice(0,5) }} – {{ r.horaFin.slice(0,5) }}</td>
-            <td><span class="badge badge-info">{{ r.aula || 'Por asignar' }}</span></td>
+            <td>
+              <div class="aula-cell">
+                <span class="badge badge-info">{{ r.aula || 'Por asignar' }}</span>
+                <small class="sede-sub" [class.is-sub]="esAulaSubterranea(r.aula)">{{ ubicacionAulaCorta(r.aula) }}</small>
+              </div>
+            </td>
             <td>
               <span
                 class="badge"

@@ -12,6 +12,7 @@ import { Docente } from '../../models/docente.model';
 import { Estudiante } from '../../models/estudiante.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
+import { REGEX_AULA_UTP, SEDES_UTP, etiquetaCortaAula, etiquetaUbicacionAula, obtenerInfoAula, validarAulaUtp } from '../../utils/sedes-utp.util';
 
 type FiltroEstadoReprog = 'TODAS' | 'SOLICITADO' | 'CONFIRMADO' | 'RECHAZADO';
 
@@ -70,13 +71,16 @@ export class GestionUsuariosComponent implements OnInit {
   errMatricula = false;
   msgCoordinador = '';
 
+  readonly sedesUtp = SEDES_UTP;
+
   readonly dias = [
     { key: 'MONDAY', label: 'Lunes' },
     { key: 'TUESDAY', label: 'Martes' },
     { key: 'WEDNESDAY', label: 'Miércoles' },
     { key: 'THURSDAY', label: 'Jueves' },
     { key: 'FRIDAY', label: 'Viernes' },
-    { key: 'SATURDAY', label: 'Sábado' }
+    { key: 'SATURDAY', label: 'Sábado' },
+    { key: 'SUNDAY', label: 'Domingo (07:00–14:00)' }
   ];
 
   constructor(
@@ -99,7 +103,7 @@ export class GestionUsuariosComponent implements OnInit {
       dia: ['MONDAY', [Validators.required]],
       horaInicio: ['08:45', [Validators.required]],
       horaFin: ['10:15', [Validators.required]],
-      aula: ['A101', [Validators.required, Validators.pattern(/^[A-J][0-9]{1,3}$/i), Validators.maxLength(4)]]
+      aula: ['A101', [Validators.required, Validators.pattern(REGEX_AULA_UTP), Validators.maxLength(5)]]
     });
 
     this.estudianteForm = this.fb.group({
@@ -439,7 +443,7 @@ export class GestionUsuariosComponent implements OnInit {
   }
 
   exportarReporteConsolidadoCsv(): void {
-    const header = ['ID', 'Curso', 'Docente', 'Fecha', 'Hora Inicio', 'Hora Fin', 'Aula', 'Motivo', 'Asistencia (%)', 'Estado', 'Observacion Coordinador'];
+    const header = ['ID', 'Curso', 'Docente', 'Fecha', 'Hora Inicio', 'Hora Fin', 'Aula', 'Sede / Nivel', 'Motivo', 'Asistencia (%)', 'Estado', 'Observacion Coordinador'];
     const rows = this.reprogramaciones.map(r => [
       r.id ?? '',
       r.curso,
@@ -448,6 +452,7 @@ export class GestionUsuariosComponent implements OnInit {
       (r.horaInicio ?? '').slice(0, 5),
       (r.horaFin ?? '').slice(0, 5),
       r.aula || 'Por asignar',
+      this.ubicacionAula(r.aula),
       r.motivo || 'Recuperación programada',
       r.porcentajeAsistencia ?? 100,
       this.etiquetaEstado(r.estado),
@@ -464,6 +469,34 @@ export class GestionUsuariosComponent implements OnInit {
     a.click();
     URL.revokeObjectURL(url);
     this.msgCoordinador = `Reporte consolidado exportado (${this.reprogramaciones.length} registro(s)).`;
+  }
+
+  get alertaAulaHorario(): string {
+    const raw = (this.horarioForm.get('aula')?.value ?? '') as string;
+    if (!raw.trim()) {
+      return '';
+    }
+    return validarAulaUtp(raw, false);
+  }
+
+  get infoAulaHorario(): string {
+    const raw = (this.horarioForm.get('aula')?.value ?? '') as string;
+    if (!raw.trim() || this.alertaAulaHorario) {
+      return '';
+    }
+    return etiquetaUbicacionAula(raw);
+  }
+
+  ubicacionAula(aula?: string): string {
+    return etiquetaUbicacionAula(aula);
+  }
+
+  ubicacionAulaCorta(aula?: string): string {
+    return etiquetaCortaAula(aula);
+  }
+
+  esAulaSubterranea(aula?: string): boolean {
+    return obtenerInfoAula(aula).esSubterranea;
   }
 
   etiquetaEstado(estado?: string): string {

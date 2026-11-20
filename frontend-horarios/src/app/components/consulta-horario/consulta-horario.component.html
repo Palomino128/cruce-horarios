@@ -192,7 +192,7 @@
                           <div class="cal-event" [class.cal-rec]="ev.tipo === 'recuperacion'">
                             <strong>{{ ev.curso }}</strong>
                             <span>{{ ev.aula }} · {{ ev.docenteCodigo }}</span>
-                            <small>{{ ev.detalle }}</small>
+                            <small>{{ etiquetaAulaCorta(ev.aula) }} · {{ ev.detalle }}</small>
                           </div>
                         }
                       }
@@ -253,7 +253,14 @@
                     <td>{{ diaEs(h.dia) }}</td>
                     <td>{{ hora(h.horaInicio) }}</td>
                     <td>{{ hora(h.horaFin) }}</td>
-                    <td><span class="badge badge-info">{{ h.aula || 'Por asignar' }}</span></td>
+                    <td>
+                      <div class="aula-stack">
+                        <span class="badge badge-info">{{ h.aula || 'Por asignar' }}</span>
+                        <small class="aula-sede-sub" [class.is-subterranea]="esAulaSubterranea(h.aula)">
+                          {{ etiquetaAulaSede(h.aula) }}
+                        </small>
+                      </div>
+                    </td>
                     @if (!soloEstudiante) {
                       <td>
                         <button type="button" class="btn-row-action" (click)="irARecuperarCurso(h)">
@@ -323,7 +330,14 @@
                     </td>
                     <td>{{ fechaEs(r.fecha) }}</td>
                     <td>{{ hora(r.horaInicio) }} – {{ hora(r.horaFin) }}</td>
-                    <td><span class="badge badge-info">{{ r.aula || 'Por asignar' }}</span></td>
+                    <td>
+                      <div class="aula-stack">
+                        <span class="badge badge-info">{{ r.aula || 'Por asignar' }}</span>
+                        <small class="aula-sede-sub" [class.is-subterranea]="esAulaSubterranea(r.aula)">
+                          {{ etiquetaAulaSede(r.aula) }}
+                        </small>
+                      </div>
+                    </td>
                     <td>
                       @if (r.porcentajeAsistencia !== undefined && r.porcentajeAsistencia !== null) {
                         <span class="badge" [class.badge-success]="r.porcentajeAsistencia > 50" [class.badge-warning]="r.porcentajeAsistencia <= 50">

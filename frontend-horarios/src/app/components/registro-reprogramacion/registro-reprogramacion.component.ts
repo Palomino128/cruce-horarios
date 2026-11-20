@@ -10,6 +10,17 @@ import { DocenteService } from '../../services/docente.service';
 import { Docente } from '../../models/docente.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
+import {
+  ClaveSede,
+  InfoSede,
+  SALONES_PRINCIPALES_UTP,
+  SEDES_UTP,
+  etiquetaCortaAula,
+  etiquetaUbicacionAula,
+  obtenerInfoAula,
+  perteneceASede,
+  validarAulaUtp
+} from '../../utils/sedes-utp.util';
 
 type EstadoEnvio = 'idle' | 'enviando' | 'ok' | 'conflicto' | 'error';
 type FiltroRecomendacion = 'TODAS' | 'RECOMENDADAS' | 'BAJAS';
@@ -43,11 +54,6 @@ const DIAS_ES: Record<string, string> = {
   SUNDAY: 'Domingo'
 };
 
-const SALONES_PRINCIPALES = [
-  'A101', 'A205', 'B108', 'B204', 'C302', 'D105',
-  'E201', 'F305', 'G102', 'H203', 'I301', 'J402'
-];
-
 @Component({
   selector: 'app-registro-reprogramacion',
   standalone: true,
@@ -60,9 +66,11 @@ export class RegistroReprogramacionComponent implements OnInit {
   readonly HORA_MIN_MINUTOS = 7 * 60;         // 07:00 am
   readonly HORA_MAX_MINUTOS = 22 * 60 + 30;   // 10:30 pm (22:30)
   readonly HORA_MAX_DOMINGO_MINUTOS = 14 * 60; // 02:00 pm (14:00)
+  readonly sedesUtp: InfoSede[] = SEDES_UTP;
 
   readonly reglas = [
     'La hora académica dura 45 minutos (sesiones de 90 min). Horario universitario: Lun–Sáb de 07:00 am a 10:30 pm; Domingos de 07:00 am a 02:00 pm.',
+    'Las aulas se distribuyen en 3 sedes UTP: Sede Tacna y Arica (A–B · sótano -1: ej. AS101), Sede Parra 1 (C–G · sótano -1 y -2: ej. CS101, DS201) y Sede Parra 2 (H–I · sótano -1 y -2: ej. HS101, IS202). La letra S después del pabellón indica aula subterránea.',
     'Los alumnos matriculados en el curso (mínimo 15 por sección, sin repetir estudiantes) ya están inscritos; el sistema calcula el porcentaje de asistencia.',
     'El sistema recomienda fechas y horarios con asistencia mayor al 50%, manteniendo visibles todas las opciones (altas y bajas).',
     'Debe existir un intervalo mínimo de 15 minutos de traslado del docente entre clases consecutivas.',
@@ -108,9 +116,10 @@ export class RegistroReprogramacionComponent implements OnInit {
   docentesMap: Record<string, Docente> = {};
   horariosCatalogo: Horario[] = [];
   reprogramacionesCatalogo: Reprogramacion[] = [];
-  salonesCatalogo: string[] = [...SALONES_PRINCIPALES];
+  salonesCatalogo: string[] = [...SALONES_PRINCIPALES_UTP];
   horariosDocente: Horario[] = [];
 
+  sedeFiltro: ClaveSede = 'TODAS';
   salonFiltro = 'TODOS';
 
   verificandoDisponibilidad = false;
@@ -161,6 +170,7 @@ export class RegistroReprogramacionComponent implements OnInit {
         aula: borrador.aula ?? '',
         motivo: borrador.motivo || this.motivosCatalogo[0]
       };
+      this.sedeFiltro = (borrador.sedeFiltro as ClaveSede) || 'TODAS';
       this.salonFiltro = borrador.salonFiltro || 'TODOS';
     }
 
@@ -202,7 +212,7 @@ export class RegistroReprogramacionComponent implements OnInit {
       }
       this.docentesMap = mapa;
 
-      const aulas = new Set<string>(SALONES_PRINCIPALES);
+      const aulas = new Set<string>(SALONES_PRINCIPALES_UTP);
       for (const h of horarios) {
         if (h.aula?.trim()) {
           aulas.add(h.aula.trim().toUpperCase());
@@ -218,7 +228,19 @@ export class RegistroReprogramacionComponent implements OnInit {
     });
   }
 
-  // ===== VALIDACIONES VISUALES (Rango horario e Intervalo 15 min) =====
+  // ===== VALIDACIONES VISUALES (Rango horario, Aula/Sede e Intervalo 15 min) =====
+
+  get alertaAula(): string {
+    return validarAulaUtp(this.modelo.aula, false);
+  }
+
+  get infoAulaActual(): string {
+    const aula = (this.modelo.aula ?? '').trim();
+    if (!aula || this.alertaAula) {
+      return '';
+    }
+    return etiquetaUbicacionAula(aula);
+  }
 
   get alertaRangoHorario(): string {
     if (!this.modelo.horaInicio || !this.modelo.horaFin) {
@@ -303,6 +325,7 @@ export class RegistroReprogramacionComponent implements OnInit {
       this.modelo.fecha &&
       this.modelo.horaInicio &&
       this.modelo.horaFin &&
+      !this.alertaAula &&
       !this.alertaRangoHorario &&
       !this.alertaIntervaloTraslado &&
       this.estado !== 'enviando'
@@ -437,6 +460,10 @@ export class RegistroReprogramacionComponent implements OnInit {
     return Boolean(this.modelo.fecha && this.modelo.horaInicio && this.modelo.horaFin);
   }
 
+  get salonesCatalogoFiltrados(): string[] {
+    return this.salonesCatalogo.filter(s => perteneceASede(s, this.sedeFiltro));
+  }
+
   get salonesDisponiblesEnFranja(): string[] {
     if (!this.tieneFechaYFranja) {
       return [];
@@ -457,21 +484,33 @@ export class RegistroReprogramacionComponent implements OnInit {
   }
 
   salonesPrincipalesDisponibles(dia: string, franja: FranjaHoraria): string[] {
-    const ocupados = new Set(this.ocupacionesEnCelda(dia, franja).map(o => o.aula));
-    return SALONES_PRINCIPALES.filter(s => !ocupados.has(s));
+    const ocupados = new Set(this.obtenerOcupaciones(dia, franja.inicio, franja.fin).map(o => o.aula));
+    return SALONES_PRINCIPALES_UTP
+      .filter(s => perteneceASede(s, this.sedeFiltro))
+      .filter(s => !ocupados.has(s));
   }
 
   ocupacionesEnCelda(dia: string, franja: FranjaHoraria): OcupacionSalon[] {
-    return this.obtenerOcupaciones(dia, franja.inicio, franja.fin);
+    return this.obtenerOcupaciones(dia, franja.inicio, franja.fin)
+      .filter(o => perteneceASede(o.aula, this.sedeFiltro));
   }
 
   ocupacionDeSalonEnCelda(salon: string, dia: string, franja: FranjaHoraria): OcupacionSalon | null {
     const target = salon.toUpperCase();
-    return this.ocupacionesEnCelda(dia, franja).find(o => o.aula === target) ?? null;
+    return this.obtenerOcupaciones(dia, franja.inicio, franja.fin).find(o => o.aula === target) ?? null;
+  }
+
+  onSedeFiltroChange(): void {
+    if (this.salonFiltro !== 'TODOS' && !perteneceASede(this.salonFiltro, this.sedeFiltro)) {
+      this.salonFiltro = 'TODOS';
+    }
+    this.guardarBorrador();
   }
 
   verTodosLosSalones(): void {
+    this.sedeFiltro = 'TODAS';
     this.salonFiltro = 'TODOS';
+    this.guardarBorrador();
   }
 
   seleccionarSalon(aula: string): void {
@@ -628,8 +667,8 @@ export class RegistroReprogramacionComponent implements OnInit {
     this.modelo.docenteCodigo = docenteFijo;
     this.modelo.curso = primerCurso;
     this.modelo.fecha = this.proximaFechaParaDia('MONDAY');
-    this.modelo.horaInicio = '10:00';
-    this.modelo.horaFin = '12:00';
+    this.modelo.horaInicio = '08:45';
+    this.modelo.horaFin = '10:15';
     this.disponibilidadPresencial = null;
     this.errorDisponibilidad = '';
     if (!docenteFijo) {
@@ -664,8 +703,21 @@ export class RegistroReprogramacionComponent implements OnInit {
       horaFin: this.modelo.horaFin,
       aula: this.modelo.aula,
       motivo: this.modelo.motivo,
+      sedeFiltro: this.sedeFiltro,
       salonFiltro: this.salonFiltro
     });
+  }
+
+  ubicacionAula(aula?: string): string {
+    return etiquetaUbicacionAula(aula);
+  }
+
+  ubicacionAulaCorta(aula?: string): string {
+    return etiquetaCortaAula(aula);
+  }
+
+  esAulaSubterranea(aula?: string): boolean {
+    return obtenerInfoAula(aula).esSubterranea;
   }
 
   nombreDocente(docenteCodigo: string): string {

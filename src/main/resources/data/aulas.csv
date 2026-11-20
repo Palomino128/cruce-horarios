@@ -1,200 +1,392 @@
-codigo;pabellon;sede;aforo
-A0000;A;Campus Arequipa;23
-A0101;A;Campus Arequipa;20
-A0102;A;Campus Arequipa;23
-A0103;A;Campus Arequipa;23
-A0104;A;Campus Arequipa;23
-A0105;A;Campus Arequipa;22
-A0106;A;Campus Arequipa;23
-A0107;A;Campus Arequipa;40
-A0108;A;Campus Arequipa;36
-A0109;A;Campus Arequipa;23
-A0110;A;Campus Arequipa;40
-A0111;A;Campus Arequipa;23
-A0112;A;Campus Arequipa;23
-A0204;A;Campus Arequipa;40
-A0205;A;Campus Arequipa;40
-A0206;A;Campus Arequipa;40
-A0207;A;Campus Arequipa;40
-A0208;A;Campus Arequipa;40
-A0209;A;Campus Arequipa;40
-A0210;A;Campus Arequipa;40
-A0211;A;Campus Arequipa;40
-A0212;A;Campus Arequipa;40
-A0213;A;Campus Arequipa;40
-A0214;A;Campus Arequipa;40
-A0215;A;Campus Arequipa;40
-A0216;A;Campus Arequipa;40
-A0217;A;Campus Arequipa;40
-A0218;A;Campus Arequipa;40
-A0219;A;Campus Arequipa;40
-A0301;A;Campus Arequipa;40
-A0302;A;Campus Arequipa;40
-A0303;A;Campus Arequipa;40
-A0304;A;Campus Arequipa;40
-A0305;A;Campus Arequipa;40
-A0306;A;Campus Arequipa;40
-A0308;A;Campus Arequipa;35
-A0309;A;Campus Arequipa;32
-A0312;A;Campus Arequipa;37
-A0314;A;Campus Arequipa;37
-A0315;A;Campus Arequipa;40
-A0316;A;Campus Arequipa;40
-A0317;A;Campus Arequipa;40
-A0318;A;Campus Arequipa;40
-A0319;A;Campus Arequipa;40
-A0401;A;Campus Arequipa;40
-A0402;A;Campus Arequipa;40
-A0403;A;Campus Arequipa;40
-A0404;A;Campus Arequipa;40
-A0407;A;Campus Arequipa;32
-A0409;A;Campus Arequipa;22
-A0410;A;Campus Arequipa;33
-A0411;A;Campus Arequipa;33
-A0412;A;Campus Arequipa;33
-A0413;A;Campus Arequipa;32
-A0414;A;Campus Arequipa;40
-A0415;A;Campus Arequipa;33
-A0416;A;Campus Arequipa;33
-A0417;A;Campus Arequipa;33
-A0418;A;Campus Arequipa;33
-B0101;B;Campus Arequipa;36
-B0102;B;Campus Arequipa;34
-B0103;B;Campus Arequipa;36
-B0104;B;Campus Arequipa;40
-B0105;B;Campus Arequipa;40
-B0107;B;Campus Arequipa;36
-B0108;B;Campus Arequipa;34
-B0109;B;Campus Arequipa;34
-B0205;B;Campus Arequipa;40
-B0206;B;Campus Arequipa;40
-B0207;B;Campus Arequipa;40
-B0208;B;Campus Arequipa;40
-B0209;B;Campus Arequipa;40
-B0304;B;Campus Arequipa;40
-B0305;B;Campus Arequipa;37
-B0306;B;Campus Arequipa;21
-B0307;B;Campus Arequipa;40
-B0308;B;Campus Arequipa;18
-B0309;B;Campus Arequipa;40
-B0310;B;Campus Arequipa;24
-B0311;B;Campus Arequipa;21
-B0313;B;Campus Arequipa;24
-B0314;B;Campus Arequipa;21
-C0101;C;Campus Parra;22
-C0102;C;Campus Parra;18
-C0103;C;Campus Parra;22
-C0104;C;Campus Parra;20
-C0105;C;Campus Parra;20
-C0106;C;Campus Parra;22
-C0107;C;Campus Parra;22
-C0201;C;Campus Parra;40
-C0202;C;Campus Parra;34
-C0203;C;Campus Parra;36
-C0204;C;Campus Parra;34
-C0205;C;Campus Parra;22
-C0206;C;Campus Parra;36
-C0207;C;Campus Parra;30
-C0208;C;Campus Parra;40
-C0301;C;Campus Parra;40
-C0302;C;Campus Parra;40
-C0303;C;Campus Parra;40
-C0304;C;Campus Parra;31
-C0305;C;Campus Parra;36
-C0306;C;Campus Parra;40
-C0401;C;Campus Parra;40
-C0402;C;Campus Parra;39
-C0403;C;Campus Parra;40
-C0404;C;Campus Parra;21
-C0405;C;Campus Parra;30
-C0406;C;Campus Parra;40
-C0407;C;Campus Parra;40
-D0101;D;Campus Parra;40
-D0102;D;Campus Parra;40
-D0201;D;Campus Parra;40
-D0202;D;Campus Parra;40
-D0301;D;Campus Parra;40
-D0302;D;Campus Parra;40
-D0401;D;Campus Parra;40
-E0201;E;Campus Parra;40
-E0202;E;Campus Parra;38
-E0203;E;Campus Parra;40
-E0204;E;Campus Parra;40
-E0205;E;Campus Parra;39
-E0206;E;Campus Parra;40
-E0301;E;Campus Parra;40
-E0302;E;Campus Parra;37
-E0303;E;Campus Parra;38
-E0304;E;Campus Parra;40
-E0305;E;Campus Parra;40
-E0306;E;Campus Parra;40
-E0401;E;Campus Parra;40
-E0402;E;Campus Parra;37
-E0403;E;Campus Parra;40
-E0404;E;Campus Parra;40
-E0405;E;Campus Parra;40
-E0406;E;Campus Parra;40
-F0101;F;Campus Parra;16
-F0102;F;Campus Parra;24
-F0201;F;Campus Parra;28
-F0202;F;Campus Parra;23
-F0301;F;Campus Parra;40
-F0302;F;Campus Parra;40
-F0303;F;Campus Parra;40
-F0401;F;Campus Parra;26
-F0402;F;Campus Parra;40
-F0403;F;Campus Parra;40
-G0101;G;Campus Parra;40
-G0102;G;Campus Parra;35
-G0103;G;Campus Parra;40
-G0104;G;Campus Parra;35
-G0201;G;Campus Parra;40
-G0202;G;Campus Parra;40
-G0203;G;Campus Parra;40
-G0204;G;Campus Parra;30
-G0301;G;Campus Parra;36
-G0303;G;Campus Parra;40
-G0304;G;Campus Parra;40
-G0305;G;Campus Parra;40
-G0401;G;Campus Parra;33
-G0402;G;Campus Parra;40
-G0403;G;Campus Parra;40
-G0404;G;Campus Parra;40
-I0103;I;Campus Parra 2;38
-I0104;I;Campus Parra 2;40
-I0105;I;Campus Parra 2;40
-I0201;I;Campus Parra 2;38
-I0202;I;Campus Parra 2;36
-I0203;I;Campus Parra 2;40
-I0204;I;Campus Parra 2;40
-I0205;I;Campus Parra 2;40
-I0206;I;Campus Parra 2;40
-I0207;I;Campus Parra 2;40
-I0208;I;Campus Parra 2;40
-I0210;I;Campus Parra 2;40
-I0301;I;Campus Parra 2;40
-I0302;I;Campus Parra 2;40
-I0303;I;Campus Parra 2;36
-I0304;I;Campus Parra 2;36
-I0305;I;Campus Parra 2;37
-I0306;I;Campus Parra 2;37
-I0307;I;Campus Parra 2;40
-I0308;I;Campus Parra 2;40
-I0309;I;Campus Parra 2;36
-I0310;I;Campus Parra 2;38
-I0401;I;Campus Parra 2;37
-I0402;I;Campus Parra 2;36
-I0403;I;Campus Parra 2;40
-I0404;I;Campus Parra 2;36
-I0405;I;Campus Parra 2;40
-I0406;I;Campus Parra 2;37
-I0407;I;Campus Parra 2;40
-I0408;I;Campus Parra 2;36
-I0409;I;Campus Parra 2;36
-J0202;J;Campus Parra 2;40
-J0401;J;Campus Parra 2;40
-J0402;J;Campus Parra 2;40
-J0403;J;Campus Parra 2;38
-J0404;J;Campus Parra 2;38
-J0405;J;Campus Parra 2;40
-J0406;J;Campus Parra 2;40
+codigo;pabellon;sede;piso;aforo
+A101;A;Sede Tacna y Arica;1;40
+A102;A;Sede Tacna y Arica;1;40
+A103;A;Sede Tacna y Arica;1;40
+A104;A;Sede Tacna y Arica;1;40
+A105;A;Sede Tacna y Arica;1;40
+A106;A;Sede Tacna y Arica;1;40
+A107;A;Sede Tacna y Arica;1;40
+A108;A;Sede Tacna y Arica;1;40
+A109;A;Sede Tacna y Arica;1;40
+A112;A;Sede Tacna y Arica;1;40
+A121;A;Sede Tacna y Arica;1;40
+A132;A;Sede Tacna y Arica;1;40
+A141;A;Sede Tacna y Arica;1;40
+A152;A;Sede Tacna y Arica;1;40
+A161;A;Sede Tacna y Arica;1;40
+A172;A;Sede Tacna y Arica;1;40
+A181;A;Sede Tacna y Arica;1;40
+A201;A;Sede Tacna y Arica;2;40
+A202;A;Sede Tacna y Arica;2;40
+A203;A;Sede Tacna y Arica;2;40
+A204;A;Sede Tacna y Arica;2;40
+A205;A;Sede Tacna y Arica;2;40
+A206;A;Sede Tacna y Arica;2;40
+A207;A;Sede Tacna y Arica;2;40
+A208;A;Sede Tacna y Arica;2;40
+A209;A;Sede Tacna y Arica;2;40
+A301;A;Sede Tacna y Arica;3;40
+A302;A;Sede Tacna y Arica;3;40
+A303;A;Sede Tacna y Arica;3;40
+A304;A;Sede Tacna y Arica;3;40
+A305;A;Sede Tacna y Arica;3;40
+A306;A;Sede Tacna y Arica;3;40
+A307;A;Sede Tacna y Arica;3;40
+A308;A;Sede Tacna y Arica;3;40
+A309;A;Sede Tacna y Arica;3;40
+A401;A;Sede Tacna y Arica;4;40
+A402;A;Sede Tacna y Arica;4;40
+A403;A;Sede Tacna y Arica;4;40
+A404;A;Sede Tacna y Arica;4;40
+A405;A;Sede Tacna y Arica;4;40
+A406;A;Sede Tacna y Arica;4;40
+A407;A;Sede Tacna y Arica;4;40
+A408;A;Sede Tacna y Arica;4;40
+A409;A;Sede Tacna y Arica;4;40
+AS101;A;Sede Tacna y Arica;-1;35
+AS102;A;Sede Tacna y Arica;-1;35
+AS103;A;Sede Tacna y Arica;-1;35
+AS104;A;Sede Tacna y Arica;-1;35
+AS105;A;Sede Tacna y Arica;-1;35
+AS106;A;Sede Tacna y Arica;-1;35
+AS107;A;Sede Tacna y Arica;-1;35
+AS108;A;Sede Tacna y Arica;-1;35
+B101;B;Sede Tacna y Arica;1;40
+B102;B;Sede Tacna y Arica;1;40
+B103;B;Sede Tacna y Arica;1;40
+B104;B;Sede Tacna y Arica;1;40
+B105;B;Sede Tacna y Arica;1;40
+B106;B;Sede Tacna y Arica;1;40
+B107;B;Sede Tacna y Arica;1;40
+B108;B;Sede Tacna y Arica;1;40
+B109;B;Sede Tacna y Arica;1;40
+B114;B;Sede Tacna y Arica;1;40
+B123;B;Sede Tacna y Arica;1;40
+B134;B;Sede Tacna y Arica;1;40
+B143;B;Sede Tacna y Arica;1;40
+B154;B;Sede Tacna y Arica;1;40
+B163;B;Sede Tacna y Arica;1;40
+B174;B;Sede Tacna y Arica;1;40
+B183;B;Sede Tacna y Arica;1;40
+B201;B;Sede Tacna y Arica;2;40
+B202;B;Sede Tacna y Arica;2;40
+B203;B;Sede Tacna y Arica;2;40
+B204;B;Sede Tacna y Arica;2;40
+B205;B;Sede Tacna y Arica;2;40
+B206;B;Sede Tacna y Arica;2;40
+B207;B;Sede Tacna y Arica;2;40
+B208;B;Sede Tacna y Arica;2;40
+B209;B;Sede Tacna y Arica;2;40
+B301;B;Sede Tacna y Arica;3;40
+B302;B;Sede Tacna y Arica;3;40
+B303;B;Sede Tacna y Arica;3;40
+B304;B;Sede Tacna y Arica;3;40
+B305;B;Sede Tacna y Arica;3;40
+B306;B;Sede Tacna y Arica;3;40
+B307;B;Sede Tacna y Arica;3;40
+B308;B;Sede Tacna y Arica;3;40
+B309;B;Sede Tacna y Arica;3;40
+B401;B;Sede Tacna y Arica;4;40
+B402;B;Sede Tacna y Arica;4;40
+B403;B;Sede Tacna y Arica;4;40
+B404;B;Sede Tacna y Arica;4;40
+B405;B;Sede Tacna y Arica;4;40
+B406;B;Sede Tacna y Arica;4;40
+B407;B;Sede Tacna y Arica;4;40
+B408;B;Sede Tacna y Arica;4;40
+B409;B;Sede Tacna y Arica;4;40
+BS101;B;Sede Tacna y Arica;-1;35
+BS102;B;Sede Tacna y Arica;-1;35
+BS103;B;Sede Tacna y Arica;-1;35
+BS104;B;Sede Tacna y Arica;-1;35
+BS105;B;Sede Tacna y Arica;-1;35
+BS106;B;Sede Tacna y Arica;-1;35
+BS107;B;Sede Tacna y Arica;-1;35
+BS108;B;Sede Tacna y Arica;-1;35
+C101;C;Sede Parra 1;1;40
+C102;C;Sede Parra 1;1;40
+C103;C;Sede Parra 1;1;40
+C104;C;Sede Parra 1;1;40
+C105;C;Sede Parra 1;1;40
+C106;C;Sede Parra 1;1;40
+C116;C;Sede Parra 1;1;40
+C125;C;Sede Parra 1;1;40
+C136;C;Sede Parra 1;1;40
+C145;C;Sede Parra 1;1;40
+C156;C;Sede Parra 1;1;40
+C165;C;Sede Parra 1;1;40
+C176;C;Sede Parra 1;1;40
+C185;C;Sede Parra 1;1;40
+C201;C;Sede Parra 1;2;40
+C202;C;Sede Parra 1;2;40
+C203;C;Sede Parra 1;2;40
+C204;C;Sede Parra 1;2;40
+C205;C;Sede Parra 1;2;40
+C206;C;Sede Parra 1;2;40
+C301;C;Sede Parra 1;3;40
+C302;C;Sede Parra 1;3;40
+C303;C;Sede Parra 1;3;40
+C304;C;Sede Parra 1;3;40
+C305;C;Sede Parra 1;3;40
+C306;C;Sede Parra 1;3;40
+C401;C;Sede Parra 1;4;40
+C402;C;Sede Parra 1;4;40
+C403;C;Sede Parra 1;4;40
+C404;C;Sede Parra 1;4;40
+C405;C;Sede Parra 1;4;40
+C406;C;Sede Parra 1;4;40
+CS101;C;Sede Parra 1;-1;35
+CS102;C;Sede Parra 1;-1;35
+CS103;C;Sede Parra 1;-1;35
+CS104;C;Sede Parra 1;-1;35
+CS201;C;Sede Parra 1;-2;35
+CS202;C;Sede Parra 1;-2;35
+CS203;C;Sede Parra 1;-2;35
+CS204;C;Sede Parra 1;-2;35
+D101;D;Sede Parra 1;1;40
+D102;D;Sede Parra 1;1;40
+D103;D;Sede Parra 1;1;40
+D104;D;Sede Parra 1;1;40
+D105;D;Sede Parra 1;1;40
+D106;D;Sede Parra 1;1;40
+D107;D;Sede Parra 1;1;40
+D118;D;Sede Parra 1;1;40
+D127;D;Sede Parra 1;1;40
+D138;D;Sede Parra 1;1;40
+D147;D;Sede Parra 1;1;40
+D158;D;Sede Parra 1;1;40
+D167;D;Sede Parra 1;1;40
+D178;D;Sede Parra 1;1;40
+D187;D;Sede Parra 1;1;40
+D201;D;Sede Parra 1;2;40
+D202;D;Sede Parra 1;2;40
+D203;D;Sede Parra 1;2;40
+D204;D;Sede Parra 1;2;40
+D205;D;Sede Parra 1;2;40
+D206;D;Sede Parra 1;2;40
+D301;D;Sede Parra 1;3;40
+D302;D;Sede Parra 1;3;40
+D303;D;Sede Parra 1;3;40
+D304;D;Sede Parra 1;3;40
+D305;D;Sede Parra 1;3;40
+D306;D;Sede Parra 1;3;40
+D401;D;Sede Parra 1;4;40
+D402;D;Sede Parra 1;4;40
+D403;D;Sede Parra 1;4;40
+D404;D;Sede Parra 1;4;40
+D405;D;Sede Parra 1;4;40
+D406;D;Sede Parra 1;4;40
+DS101;D;Sede Parra 1;-1;35
+DS102;D;Sede Parra 1;-1;35
+DS103;D;Sede Parra 1;-1;35
+DS104;D;Sede Parra 1;-1;35
+DS201;D;Sede Parra 1;-2;35
+DS202;D;Sede Parra 1;-2;35
+DS203;D;Sede Parra 1;-2;35
+DS204;D;Sede Parra 1;-2;35
+E101;E;Sede Parra 1;1;40
+E102;E;Sede Parra 1;1;40
+E103;E;Sede Parra 1;1;40
+E104;E;Sede Parra 1;1;40
+E105;E;Sede Parra 1;1;40
+E106;E;Sede Parra 1;1;40
+E109;E;Sede Parra 1;1;40
+E120;E;Sede Parra 1;1;40
+E129;E;Sede Parra 1;1;40
+E140;E;Sede Parra 1;1;40
+E149;E;Sede Parra 1;1;40
+E160;E;Sede Parra 1;1;40
+E169;E;Sede Parra 1;1;40
+E180;E;Sede Parra 1;1;40
+E189;E;Sede Parra 1;1;40
+E201;E;Sede Parra 1;2;40
+E202;E;Sede Parra 1;2;40
+E203;E;Sede Parra 1;2;40
+E204;E;Sede Parra 1;2;40
+E205;E;Sede Parra 1;2;40
+E206;E;Sede Parra 1;2;40
+E301;E;Sede Parra 1;3;40
+E302;E;Sede Parra 1;3;40
+E303;E;Sede Parra 1;3;40
+E304;E;Sede Parra 1;3;40
+E305;E;Sede Parra 1;3;40
+E306;E;Sede Parra 1;3;40
+E401;E;Sede Parra 1;4;40
+E402;E;Sede Parra 1;4;40
+E403;E;Sede Parra 1;4;40
+E404;E;Sede Parra 1;4;40
+E405;E;Sede Parra 1;4;40
+E406;E;Sede Parra 1;4;40
+ES101;E;Sede Parra 1;-1;35
+ES102;E;Sede Parra 1;-1;35
+ES103;E;Sede Parra 1;-1;35
+ES104;E;Sede Parra 1;-1;35
+ES201;E;Sede Parra 1;-2;35
+ES202;E;Sede Parra 1;-2;35
+ES203;E;Sede Parra 1;-2;35
+ES204;E;Sede Parra 1;-2;35
+F101;F;Sede Parra 1;1;40
+F102;F;Sede Parra 1;1;40
+F103;F;Sede Parra 1;1;40
+F104;F;Sede Parra 1;1;40
+F105;F;Sede Parra 1;1;40
+F106;F;Sede Parra 1;1;40
+F111;F;Sede Parra 1;1;40
+F122;F;Sede Parra 1;1;40
+F131;F;Sede Parra 1;1;40
+F142;F;Sede Parra 1;1;40
+F151;F;Sede Parra 1;1;40
+F162;F;Sede Parra 1;1;40
+F171;F;Sede Parra 1;1;40
+F182;F;Sede Parra 1;1;40
+F201;F;Sede Parra 1;2;40
+F202;F;Sede Parra 1;2;40
+F203;F;Sede Parra 1;2;40
+F204;F;Sede Parra 1;2;40
+F205;F;Sede Parra 1;2;40
+F206;F;Sede Parra 1;2;40
+F301;F;Sede Parra 1;3;40
+F302;F;Sede Parra 1;3;40
+F303;F;Sede Parra 1;3;40
+F304;F;Sede Parra 1;3;40
+F305;F;Sede Parra 1;3;40
+F306;F;Sede Parra 1;3;40
+F401;F;Sede Parra 1;4;40
+F402;F;Sede Parra 1;4;40
+F403;F;Sede Parra 1;4;40
+F404;F;Sede Parra 1;4;40
+F405;F;Sede Parra 1;4;40
+F406;F;Sede Parra 1;4;40
+FS101;F;Sede Parra 1;-1;35
+FS102;F;Sede Parra 1;-1;35
+FS103;F;Sede Parra 1;-1;35
+FS104;F;Sede Parra 1;-1;35
+FS201;F;Sede Parra 1;-2;35
+FS202;F;Sede Parra 1;-2;35
+FS203;F;Sede Parra 1;-2;35
+FS204;F;Sede Parra 1;-2;35
+G101;G;Sede Parra 1;1;40
+G102;G;Sede Parra 1;1;40
+G103;G;Sede Parra 1;1;40
+G104;G;Sede Parra 1;1;40
+G105;G;Sede Parra 1;1;40
+G106;G;Sede Parra 1;1;40
+G113;G;Sede Parra 1;1;40
+G124;G;Sede Parra 1;1;40
+G133;G;Sede Parra 1;1;40
+G144;G;Sede Parra 1;1;40
+G153;G;Sede Parra 1;1;40
+G164;G;Sede Parra 1;1;40
+G173;G;Sede Parra 1;1;40
+G184;G;Sede Parra 1;1;40
+G201;G;Sede Parra 1;2;40
+G202;G;Sede Parra 1;2;40
+G203;G;Sede Parra 1;2;40
+G204;G;Sede Parra 1;2;40
+G205;G;Sede Parra 1;2;40
+G206;G;Sede Parra 1;2;40
+G301;G;Sede Parra 1;3;40
+G302;G;Sede Parra 1;3;40
+G303;G;Sede Parra 1;3;40
+G304;G;Sede Parra 1;3;40
+G305;G;Sede Parra 1;3;40
+G306;G;Sede Parra 1;3;40
+G401;G;Sede Parra 1;4;40
+G402;G;Sede Parra 1;4;40
+G403;G;Sede Parra 1;4;40
+G404;G;Sede Parra 1;4;40
+G405;G;Sede Parra 1;4;40
+G406;G;Sede Parra 1;4;40
+GS101;G;Sede Parra 1;-1;35
+GS102;G;Sede Parra 1;-1;35
+GS103;G;Sede Parra 1;-1;35
+GS104;G;Sede Parra 1;-1;35
+GS201;G;Sede Parra 1;-2;35
+GS202;G;Sede Parra 1;-2;35
+GS203;G;Sede Parra 1;-2;35
+GS204;G;Sede Parra 1;-2;35
+H101;H;Sede Parra 2;1;40
+H102;H;Sede Parra 2;1;40
+H103;H;Sede Parra 2;1;40
+H104;H;Sede Parra 2;1;40
+H105;H;Sede Parra 2;1;40
+H106;H;Sede Parra 2;1;40
+H115;H;Sede Parra 2;1;40
+H126;H;Sede Parra 2;1;40
+H135;H;Sede Parra 2;1;40
+H146;H;Sede Parra 2;1;40
+H155;H;Sede Parra 2;1;40
+H166;H;Sede Parra 2;1;40
+H175;H;Sede Parra 2;1;40
+H186;H;Sede Parra 2;1;40
+H201;H;Sede Parra 2;2;40
+H202;H;Sede Parra 2;2;40
+H203;H;Sede Parra 2;2;40
+H204;H;Sede Parra 2;2;40
+H205;H;Sede Parra 2;2;40
+H206;H;Sede Parra 2;2;40
+H301;H;Sede Parra 2;3;40
+H302;H;Sede Parra 2;3;40
+H303;H;Sede Parra 2;3;40
+H304;H;Sede Parra 2;3;40
+H305;H;Sede Parra 2;3;40
+H306;H;Sede Parra 2;3;40
+H401;H;Sede Parra 2;4;40
+H402;H;Sede Parra 2;4;40
+H403;H;Sede Parra 2;4;40
+H404;H;Sede Parra 2;4;40
+H405;H;Sede Parra 2;4;40
+H406;H;Sede Parra 2;4;40
+HS101;H;Sede Parra 2;-1;35
+HS102;H;Sede Parra 2;-1;35
+HS103;H;Sede Parra 2;-1;35
+HS104;H;Sede Parra 2;-1;35
+HS105;H;Sede Parra 2;-1;35
+HS201;H;Sede Parra 2;-2;35
+HS202;H;Sede Parra 2;-2;35
+HS203;H;Sede Parra 2;-2;35
+HS204;H;Sede Parra 2;-2;35
+HS205;H;Sede Parra 2;-2;35
+I101;I;Sede Parra 2;1;40
+I102;I;Sede Parra 2;1;40
+I103;I;Sede Parra 2;1;40
+I104;I;Sede Parra 2;1;40
+I105;I;Sede Parra 2;1;40
+I106;I;Sede Parra 2;1;40
+I108;I;Sede Parra 2;1;40
+I117;I;Sede Parra 2;1;40
+I128;I;Sede Parra 2;1;40
+I137;I;Sede Parra 2;1;40
+I148;I;Sede Parra 2;1;40
+I157;I;Sede Parra 2;1;40
+I168;I;Sede Parra 2;1;40
+I177;I;Sede Parra 2;1;40
+I188;I;Sede Parra 2;1;40
+I201;I;Sede Parra 2;2;40
+I202;I;Sede Parra 2;2;40
+I203;I;Sede Parra 2;2;40
+I204;I;Sede Parra 2;2;40
+I205;I;Sede Parra 2;2;40
+I206;I;Sede Parra 2;2;40
+I301;I;Sede Parra 2;3;40
+I302;I;Sede Parra 2;3;40
+I303;I;Sede Parra 2;3;40
+I304;I;Sede Parra 2;3;40
+I305;I;Sede Parra 2;3;40
+I306;I;Sede Parra 2;3;40
+I401;I;Sede Parra 2;4;40
+I402;I;Sede Parra 2;4;40
+I403;I;Sede Parra 2;4;40
+I404;I;Sede Parra 2;4;40
+I405;I;Sede Parra 2;4;40
+I406;I;Sede Parra 2;4;40
+IS101;I;Sede Parra 2;-1;35
+IS102;I;Sede Parra 2;-1;35
+IS103;I;Sede Parra 2;-1;35
+IS104;I;Sede Parra 2;-1;35
+IS105;I;Sede Parra 2;-1;35
+IS201;I;Sede Parra 2;-2;35
+IS202;I;Sede Parra 2;-2;35
+IS203;I;Sede Parra 2;-2;35
+IS204;I;Sede Parra 2;-2;35
+IS205;I;Sede Parra 2;-2;35

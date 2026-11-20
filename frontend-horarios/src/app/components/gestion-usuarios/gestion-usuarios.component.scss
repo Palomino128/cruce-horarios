@@ -292,6 +292,30 @@ $muted: #475569;
   font-weight: 600;
 }
 
+.hint-sede {
+  font-size: 0.74rem;
+  color: $sky;
+  font-weight: 700;
+}
+
+.aula-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.16rem;
+
+  .sede-sub {
+    font-size: 0.7rem;
+    color: $muted;
+    font-weight: 600;
+
+    &.is-sub {
+      color: #0369a1;
+      font-weight: 700;
+    }
+  }
+}
+
 .feedback {
   padding: 0.6rem 0.85rem;
   border-radius: 8px;

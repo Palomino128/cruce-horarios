@@ -44,7 +44,7 @@
                 <li>
                   <span class="time">{{ hora(h.horaInicio) }} – {{ hora(h.horaFin) }}</span>
                   <span class="course">{{ h.curso }}</span>
-                  <span class="meta">{{ h.docenteCodigo }} · Salón {{ h.aula || 'Por asignar' }}</span>
+                  <span class="meta">{{ h.docenteCodigo }} · Salón {{ h.aula || 'Por asignar' }} ({{ ubicacionAulaCorta(h.aula) }})</span>
                 </li>
               }
             </ul>
@@ -145,14 +145,17 @@
             </div>
 
             <div class="field">
-              <label for="aula">Salón / Aula (opcional: automático o elige uno disponible)</label>
-              <input id="aula" name="aula" type="text" placeholder="Automático o ej. A101"
+              <label for="aula">Salón / Aula (ej. A101, AS101, CS201, HS201 — S = Sótano)</label>
+              <input id="aula" name="aula" type="text" maxlength="5" placeholder="Automático o ej. AS101, HS201"
                      list="salonesList" autocomplete="off" [(ngModel)]="modelo.aula" (ngModelChange)="guardarBorrador()" />
               <datalist id="salonesList">
                 @for (s of salonesCatalogo; track s) {
-                  <option [value]="s">Salón {{ s }}</option>
+                  <option [value]="s">Salón {{ s }} · {{ ubicacionAula(s) }}</option>
                 }
               </datalist>
+              @if (infoAulaActual) {
+                <small class="hint-docente">{{ infoAulaActual }}</small>
+              }
             </div>
 
             <div class="field">
@@ -165,8 +168,18 @@
             </div>
           </div>
 
-          <!-- ALERTAS VISUALES EN VIVO (Rango horario e Intervalo de traslado 15 min) -->
+          <!-- ALERTAS VISUALES EN VIVO (Rango horario, Aula/Sede e Intervalo de traslado 15 min) -->
           <div class="alerts-stack">
+            @if (alertaAula) {
+              <div class="toast-banner toast-danger" role="alert">
+                <div>
+                  <strong>Aula o Sede UTP inválida</strong>
+                  {{ alertaAula }}
+                </div>
+                <span class="badge badge-danger">SEDE / SÓTANO</span>
+              </div>
+            }
+
             @if (alertaRangoHorario) {
               <div class="toast-banner toast-danger" role="alert">
                 <div>
@@ -244,7 +257,7 @@
                 <div class="chip-wrap">
                   @for (s of salonesDisponiblesEnFranja.slice(0, 14); track s) {
                     <button type="button" class="salon-chip ok" [class.active]="modelo.aula?.toUpperCase() === s" (click)="seleccionarSalon(s)">
-                      ✔ {{ s }}
+                      ✔ {{ s }} · {{ ubicacionAulaCorta(s) }}
                     </button>
                   }
                   @if (salonesDisponiblesEnFranja.length > 14) {
@@ -258,7 +271,7 @@
                   <strong>✖ Salones No Disponibles:</strong>
                   <div class="chip-wrap">
                     @for (o of salonesOcupadosEnFranja; track $index) {
-                      <span class="salon-chip busy">✖ {{ o.aula }} · {{ o.curso }} ({{ o.docenteCodigo }})</span>
+                      <span class="salon-chip busy">✖ {{ o.aula }} ({{ ubicacionAulaCorta(o.aula) }}) · {{ o.curso }} ({{ o.docenteCodigo }})</span>
                     }
                   </div>
                 </div>
@@ -272,7 +285,7 @@
             <div class="toast-banner toast-success" role="status">
               <div>
                 <strong>✔ {{ mensaje }}</strong>
-                {{ modelo.docenteCodigo }} · {{ modelo.curso }} · {{ modelo.fecha }} {{ hora(modelo.horaInicio) }}–{{ hora(modelo.horaFin) }} {{ modelo.aula ? '· Salón ' + modelo.aula : '' }}
+                {{ modelo.docenteCodigo }} · {{ modelo.curso }} · {{ modelo.fecha }} {{ hora(modelo.horaInicio) }}–{{ hora(modelo.horaFin) }} {{ modelo.aula ? '· Salón ' + modelo.aula + ' (' + ubicacionAulaCorta(modelo.aula) + ')' : '' }}
               </div>
               <button type="button" class="btn btn-success" (click)="irAConfirmacion()">Ir a Confirmación →</button>
             </div>
@@ -367,7 +380,14 @@
                   <td class="bold-cell">{{ fechaEs(op.fecha) }}</td>
                   <td>{{ diaEs(op.dia) }}</td>
                   <td>{{ hora(op.horaInicio) }} – {{ hora(op.horaFin) }}</td>
-                  <td><span class="badge badge-info">{{ op.aulaSugerida }}</span></td>
+                  <td>
+                    <div class="aula-reco-cell">
+                      <span class="badge badge-info">{{ op.aulaSugerida }}</span>
+                      <small class="aula-sub-tag" [class.is-sub]="esAulaSubterranea(op.aulaSugerida)">
+                        {{ ubicacionAulaCorta(op.aulaSugerida) }}
+                      </small>
+                    </div>
+                  </td>
                   <td>
                     <div class="pct-cell">
                       <strong>{{ op.porcentajeAsistencia }}%</strong>
@@ -416,14 +436,24 @@
         </div>
 
         <div class="filter-box">
-          <label for="salonFiltro">Filtrar salón:</label>
-          <select id="salonFiltro" [(ngModel)]="salonFiltro" name="salonFiltro" (ngModelChange)="guardarBorrador()">
-            <option value="TODOS">Todos los salones principales (12 aulas)</option>
-            @for (s of salonesCatalogo; track s) {
-              <option [value]="s">Salón {{ s }}</option>
+          <label for="sedeFiltro">Sede:</label>
+          <select id="sedeFiltro" [(ngModel)]="sedeFiltro" name="sedeFiltro" (ngModelChange)="onSedeFiltroChange()">
+            <option value="TODAS">Todas las sedes (3)</option>
+            @for (se of sedesUtp; track se.clave) {
+              <option [value]="se.clave">{{ se.nombre }} ({{ se.pabellones }})</option>
             }
           </select>
-          @if (!filtroEsGeneral) {
+
+          <label for="salonFiltro">Salón:</label>
+          <select id="salonFiltro" [(ngModel)]="salonFiltro" name="salonFiltro" (ngModelChange)="guardarBorrador()">
+            <option value="TODOS">
+              {{ sedeFiltro === 'TODAS' ? 'Todos los salones principales' : 'Todos los salones de esta sede' }}
+            </option>
+            @for (s of salonesCatalogoFiltrados; track s) {
+              <option [value]="s">Salón {{ s }} · {{ ubicacionAulaCorta(s) }}</option>
+            }
+          </select>
+          @if (!filtroEsGeneral || sedeFiltro !== 'TODAS') {
             <button type="button" class="btn-ver-todos" (click)="verTodosLosSalones()">Ver Todos</button>
           }
         </div>
@@ -433,6 +463,14 @@
         <span><i class="dot free"></i> Disponible (clic para usar horario y salón)</span>
         <span><i class="dot busy"></i> No disponible (ocupado por clase regular o recuperación)</span>
         <span><i class="dot closed"></i> Cerrado (Domingos después de las 02:00 pm)</span>
+      </div>
+
+      <div class="sede-chips-ref">
+        @for (se of sedesUtp; track se.clave) {
+          <span class="sede-pill">
+            <strong>{{ se.nombre }}:</strong> Pabellones {{ se.pabellones }} · {{ se.subterraneaDetalle }}
+          </span>
+        }
       </div>
 
       <div class="matrix-wrap">

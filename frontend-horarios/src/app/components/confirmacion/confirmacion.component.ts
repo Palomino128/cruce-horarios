@@ -9,6 +9,7 @@ import { DocenteService } from '../../services/docente.service';
 import { Docente } from '../../models/docente.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
+import { etiquetaUbicacionAula } from '../../utils/sedes-utp.util';
 
 type EstadoCelda = 'libre' | 'ocupado' | 'nuevo' | 'cerrado';
 
@@ -225,7 +226,7 @@ export class ConfirmacionComponent implements OnInit, OnDestroy {
     const r = this.reprogramacion;
     const docenteNombre = this.docente ? `${this.docente.nombres} ${this.docente.apellidos}` : r.docenteCodigo;
     const filas = [
-      ['Solicitud', 'Docente Codigo', 'Docente Nombre', 'Curso', 'Fecha', 'Hora Inicio', 'Hora Fin', 'Salon', 'Motivo', 'Asistencia (%)', 'Estado', 'Observacion Coordinador'],
+      ['Solicitud', 'Docente Codigo', 'Docente Nombre', 'Curso', 'Fecha', 'Hora Inicio', 'Hora Fin', 'Salon', 'Sede / Nivel', 'Motivo', 'Asistencia (%)', 'Estado', 'Observacion Coordinador'],
       [
         this.numeroSolicitud,
         r.docenteCodigo,
@@ -235,6 +236,7 @@ export class ConfirmacionComponent implements OnInit, OnDestroy {
         this.hora(r.horaInicio),
         this.hora(r.horaFin),
         r.aula || 'Por asignar',
+        this.ubicacionAula(r.aula),
         r.motivo || 'Recuperación programada',
         r.porcentajeAsistencia ?? 100,
         this.etiquetaEstado,
@@ -250,6 +252,10 @@ export class ConfirmacionComponent implements OnInit, OnDestroy {
     a.click();
     URL.revokeObjectURL(url);
     this.mensajeAccion = `Constancia ${this.numeroSolicitud} exportada en formato CSV.`;
+  }
+
+  ubicacionAula(aula?: string): string {
+    return etiquetaUbicacionAula(aula);
   }
 
   estadoCelda(dia: string, bloque: BloqueAcademico): EstadoCelda {

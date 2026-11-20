@@ -500,6 +500,24 @@ table {
   flex-wrap: wrap;
 }
 
+.aula-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+
+  .aula-sede-sub {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: $muted;
+
+    &.is-subterranea {
+      color: #0369a1;
+      font-weight: 700;
+    }
+  }
+}
+
 .btn-row-action {
   padding: 0.38rem 0.82rem;
   border-radius: 7px;

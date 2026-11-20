@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 public class CruceHorarioService {
@@ -29,6 +30,13 @@ public class CruceHorarioService {
     private static final LocalTime HORA_FIN_DOMINGO = LocalTime.of(14, 0);
     private static final int HORA_ACADEMICA_MIN = 45;
     private static final int INTERVALO_TRASLADO_MIN = 15;
+
+    private static final Pattern PATTERN_TACNA_ARICA = Pattern.compile("^[AB](S1\\d{2}|[1-9]\\d{2})$");
+    private static final Pattern PATTERN_PARRA_1 = Pattern.compile("^[C-G](S[12]\\d{2}|[1-9]\\d{2})$");
+    private static final Pattern PATTERN_PARRA_2 = Pattern.compile("^[HI](S[12]\\d{2}|[1-9]\\d{2})$");
+    private static final Pattern PATTERN_TACNA_SOTANO_EXCEDIDO = Pattern.compile("^[AB]S[2-9]\\d{2}$");
+    private static final Pattern PATTERN_PARRA1_SOTANO_EXCEDIDO = Pattern.compile("^[C-G]S[3-9]\\d{2}$");
+    private static final Pattern PATTERN_PARRA2_SOTANO_EXCEDIDO = Pattern.compile("^[HI]S[3-9]\\d{2}$");
 
     @Autowired
     private HorarioRepository horarioRepository;
@@ -93,6 +101,15 @@ public class CruceHorarioService {
                 nueva.getFecha().getDayOfWeek(), nueva.getHoraInicio(), nueva.getHoraFin());
         if (rangoError.isPresent()) {
             return rangoError;
+        }
+
+        if (nueva.getAula() != null && !nueva.getAula().isBlank()) {
+            String aulaNorm = nueva.getAula().trim().toUpperCase();
+            Optional<String> aulaError = validarFormatoAulaUtp(aulaNorm);
+            if (aulaError.isPresent()) {
+                return aulaError;
+            }
+            nueva.setAula(aulaNorm);
         }
 
         String doc = nueva.getDocenteCodigo().trim().toUpperCase();
@@ -162,6 +179,15 @@ public class CruceHorarioService {
             return rangoError;
         }
 
+        if (h.getAula() != null && !h.getAula().isBlank()) {
+            String aulaNorm = h.getAula().trim().toUpperCase();
+            Optional<String> aulaError = validarFormatoAulaUtp(aulaNorm);
+            if (aulaError.isPresent()) {
+                return aulaError;
+            }
+            h.setAula(aulaNorm);
+        }
+
         String doc = h.getDocenteCodigo().trim().toUpperCase();
         h.setDocenteCodigo(doc);
 
@@ -209,6 +235,66 @@ public class CruceHorarioService {
                     + minutos + " min.");
         }
         return Optional.empty();
+    }
+
+    public Optional<String> validarFormatoAulaUtp(String aula) {
+        if (aula == null || aula.isBlank()) {
+            return Optional.empty();
+        }
+        String clean = aula.trim().toUpperCase();
+        char pab = clean.charAt(0);
+        if (pab == 'A' || pab == 'B') {
+            if (PATTERN_TACNA_ARICA.matcher(clean).matches()) {
+                return Optional.empty();
+            }
+            if (PATTERN_TACNA_SOTANO_EXCEDIDO.matcher(clean).matches()) {
+                return Optional.of("Aula inválida (" + clean
+                        + "): en Sede Tacna y Arica (pabellones A y B) las aulas subterráneas solo llegan al piso -1 (ej. AS101, BS102).");
+            }
+            return Optional.of("Formato inválido (" + clean
+                    + ") para Sede Tacna y Arica: use A/B + piso (ej. A101) o S1xx para sótano -1 (ej. AS101).");
+        }
+        if (pab >= 'C' && pab <= 'G') {
+            if (PATTERN_PARRA_1.matcher(clean).matches()) {
+                return Optional.empty();
+            }
+            if (PATTERN_PARRA1_SOTANO_EXCEDIDO.matcher(clean).matches()) {
+                return Optional.of("Aula inválida (" + clean
+                        + "): en Sede Parra 1 (pabellones C–G) las aulas subterráneas solo llegan hasta el piso -2 (ej. CS101, DS201).");
+            }
+            return Optional.of("Formato inválido (" + clean
+                    + ") para Sede Parra 1: use C–G + piso (ej. C302) o S1xx/S2xx para sótano -1/-2 (ej. DS201).");
+        }
+        if (pab == 'H' || pab == 'I') {
+            if (PATTERN_PARRA_2.matcher(clean).matches()) {
+                return Optional.empty();
+            }
+            if (PATTERN_PARRA2_SOTANO_EXCEDIDO.matcher(clean).matches()) {
+                return Optional.of("Aula inválida (" + clean
+                        + "): en Sede Parra 2 (pabellones H–I) las aulas subterráneas solo llegan hasta el piso -2 (ej. HS101, IS202).");
+            }
+            return Optional.of("Formato inválido (" + clean
+                    + ") para Sede Parra 2: use H–I + piso (ej. H203) o S1xx/S2xx para sótano -1/-2 (ej. HS201).");
+        }
+        return Optional.of("Pabellón no válido (" + clean
+                + "). Las 3 sedes UTP son: Sede Tacna y Arica (A–B, sótano -1: AS101), Sede Parra 1 (C–G, sótano -1/-2: CS101, DS201) y Sede Parra 2 (H–I, sótano -1/-2: HS101, IS202).");
+    }
+
+    public String obtenerSedeDeAula(String aula) {
+        if (aula == null || aula.isBlank()) {
+            return "Sede UTP";
+        }
+        char pab = aula.trim().toUpperCase().charAt(0);
+        if (pab == 'A' || pab == 'B') {
+            return "Sede Tacna y Arica";
+        }
+        if (pab >= 'C' && pab <= 'G') {
+            return "Sede Parra 1";
+        }
+        if (pab == 'H' || pab == 'I') {
+            return "Sede Parra 2";
+        }
+        return "Sede UTP";
     }
 
     public boolean existeCruce(Reprogramacion nueva) {
@@ -331,7 +417,11 @@ public class CruceHorarioService {
         List<Horario> todosHorarios = horarioRepository != null ? horarioRepository.findAll() : List.of();
         List<Reprogramacion> todasReprogs = reprogramacionRepository != null ? reprogramacionRepository.findAll() : List.of();
 
-        List<String> salonesBase = List.of("A101", "A205", "B108", "B204", "C302", "D105", "E201", "F305", "G102", "H203", "I301", "J402");
+        List<String> salonesBase = List.of(
+                "A101", "AS101", "A205", "B108", "BS102", "B204",
+                "C302", "CS101", "D105", "DS201", "E201", "F305",
+                "G102", "H203", "HS101", "HS201", "I301", "IS202"
+        );
         LocalTime[][] franjas = new LocalTime[][]{
                 {LocalTime.of(7, 0), LocalTime.of(8, 30)},
                 {LocalTime.of(8, 45), LocalTime.of(10, 15)},

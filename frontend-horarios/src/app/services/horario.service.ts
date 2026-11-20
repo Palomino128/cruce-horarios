@@ -60,6 +60,7 @@ export interface BorradorReprogramacion {
   horaFin: string;
   aula?: string;
   motivo?: string;
+  sedeFiltro?: string;
   salonFiltro?: string;
 }
 

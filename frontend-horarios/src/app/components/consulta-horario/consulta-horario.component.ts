@@ -11,6 +11,7 @@ import { Docente } from '../../models/docente.model';
 import { Estudiante } from '../../models/estudiante.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
+import { etiquetaCortaAula, etiquetaUbicacionAula, obtenerInfoAula } from '../../utils/sedes-utp.util';
 
 export type TipoConsulta = 'docente' | 'estudiante';
 type ModoVisualizacion = 'tabla' | 'calendario';
@@ -207,7 +208,24 @@ export class ConsultaHorarioComponent implements OnInit {
   }
 
   get salonesResumen(): string {
-    return this.salonesAsignados.length ? this.salonesAsignados.join(', ') : 'Sin asignar';
+    if (!this.salonesAsignados.length) {
+      return 'Sin asignar';
+    }
+    return this.salonesAsignados
+      .map(s => `${s} (${etiquetaCortaAula(s)})`)
+      .join(' · ');
+  }
+
+  etiquetaAulaSede(aula?: string): string {
+    return etiquetaUbicacionAula(aula);
+  }
+
+  etiquetaAulaCorta(aula?: string): string {
+    return etiquetaCortaAula(aula);
+  }
+
+  esAulaSubterranea(aula?: string): boolean {
+    return obtenerInfoAula(aula).esSubterranea;
   }
 
   get totalPaginasHorarios(): number {

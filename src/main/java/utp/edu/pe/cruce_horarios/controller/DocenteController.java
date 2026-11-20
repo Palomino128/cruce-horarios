@@ -37,7 +37,10 @@ public class DocenteController {
             "Redes y Comunicaciones"
     };
 
-    private static final String[] AULAS_CATALOGO = {"A102", "B205", "C304", "D201", "E104", "F202", "G301", "H105", "I204", "J302"};
+    private static final String[] AULAS_CATALOGO = {
+            "A102", "AS101", "B205", "BS102", "C304", "CS101", "D201", "DS201",
+            "E104", "F202", "G301", "H105", "HS201", "I204", "IS202"
+    };
 
     @Autowired
     private DocenteRepository docenteRepository;

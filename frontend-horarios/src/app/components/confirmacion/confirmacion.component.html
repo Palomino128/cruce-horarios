@@ -91,7 +91,7 @@
           <span><b>Fecha y horario:</b> {{ fechaFormateada }} · {{ hora(reprogramacion.horaInicio) }} – {{ hora(reprogramacion.horaFin) }}</span>
           @if (reprogramacion.aula) {
             <span class="sep">|</span>
-            <span><b>Salón:</b> {{ reprogramacion.aula }}</span>
+            <span><b>Salón:</b> {{ reprogramacion.aula }} ({{ ubicacionAula(reprogramacion.aula) }})</span>
           }
         </p>
 
