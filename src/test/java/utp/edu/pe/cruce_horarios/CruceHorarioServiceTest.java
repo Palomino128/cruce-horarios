@@ -148,11 +148,21 @@ public class CruceHorarioServiceTest {
         Horario existente = new Horario("DOC-101", "Desarrollo Web Integrado",
                 DayOfWeek.MONDAY, LocalTime.of(7, 0), LocalTime.of(8, 30), "A101");
 
-        // Fuera del horario universitario (07:00 - 22:30)
+        // Fuera del horario universitario de lunes a sábado (07:00 - 22:30)
         Reprogramacion fueraRango = new Reprogramacion("DOC-101", "Desarrollo Web Integrado",
                 LocalDate.of(2026, 11, 23), LocalTime.of(6, 15), LocalTime.of(7, 45), "B204");
         assertTrue(cruceHorarioService.validarReglasAcademicas(fueraRango)
                 .orElse("").contains("07:00 am a 10:30 pm"));
+
+        // Domingos restringidos de 07:00 am a 02:00 pm (14:00)
+        Reprogramacion domingoTarde = new Reprogramacion("DOC-101", "Desarrollo Web Integrado",
+                LocalDate.of(2026, 11, 22), LocalTime.of(14, 0), LocalTime.of(15, 30), "B204");
+        assertTrue(cruceHorarioService.validarReglasAcademicas(domingoTarde)
+                .orElse("").contains("14:00"));
+
+        Reprogramacion domingoMananaValida = new Reprogramacion("DOC-101", "Desarrollo Web Integrado",
+                LocalDate.of(2026, 11, 22), LocalTime.of(12, 15), LocalTime.of(13, 45), "B204");
+        assertTrue(cruceHorarioService.validarReglasAcademicas(domingoMananaValida).isEmpty());
 
         // Duración no múltiplo de 45 min (ej. 60 min)
         Reprogramacion duracionInvalida = new Reprogramacion("DOC-101", "Desarrollo Web Integrado",
@@ -269,6 +279,10 @@ public class CruceHorarioServiceTest {
         assertFalse(opciones.isEmpty());
         assertTrue(opciones.stream().anyMatch(o -> o.recomendada() && o.porcentajeAsistencia() > 50.0));
         assertTrue(opciones.stream().anyMatch(o -> !o.recomendada() && o.porcentajeAsistencia() <= 50.0));
+        // Ningún domingo puede pasar de las 14:00
+        assertTrue(opciones.stream()
+                .filter(o -> "SUNDAY".equals(o.dia()))
+                .allMatch(o -> !LocalTime.parse(o.horaFin()).isAfter(LocalTime.of(14, 0))));
         // Ordenadas descendentemente por porcentaje de asistencia
         for (int i = 1; i < opciones.size(); i++) {
             assertTrue(opciones.get(i - 1).porcentajeAsistencia() >= opciones.get(i).porcentajeAsistencia());

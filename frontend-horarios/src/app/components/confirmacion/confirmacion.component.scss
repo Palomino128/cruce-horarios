@@ -231,6 +231,10 @@ $muted: #475569;
     &.nuevo {
       background: $sky-bright;
     }
+
+    &.cerrado {
+      background: #cbd5e1;
+    }
   }
 }
 
@@ -283,6 +287,10 @@ table {
 
     &.nuevo {
       background: $sky-bright;
+    }
+
+    &.cerrado {
+      background: #cbd5e1;
     }
   }
 }

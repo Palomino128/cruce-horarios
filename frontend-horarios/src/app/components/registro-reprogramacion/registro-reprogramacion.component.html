@@ -432,6 +432,7 @@
       <div class="legend-bar">
         <span><i class="dot free"></i> Disponible (clic para usar horario y salón)</span>
         <span><i class="dot busy"></i> No disponible (ocupado por clase regular o recuperación)</span>
+        <span><i class="dot closed"></i> Cerrado (Domingos después de las 02:00 pm)</span>
       </div>
 
       <div class="matrix-wrap">
@@ -450,7 +451,12 @@
                 <td class="franja-col">{{ fr.etiqueta }}</td>
                 @for (d of diasSemana; track d.clave) {
                   <td>
-                    @if (!filtroEsGeneral) {
+                    @if (!esFranjaPermitidaEnDia(d.clave, fr)) {
+                      <div class="slot slot-closed">
+                        <strong>Cerrado</strong>
+                        <span>Dom. hasta 14:00</span>
+                      </div>
+                    } @else if (!filtroEsGeneral) {
                       @if (ocupacionDeSalonEnCelda(salonFiltro, d.clave, fr); as oc) {
                         <div class="slot slot-busy">
                           <strong>✖ No disponible</strong>

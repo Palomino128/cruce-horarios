@@ -10,7 +10,7 @@ import { Docente } from '../../models/docente.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
 
-type EstadoCelda = 'libre' | 'ocupado' | 'nuevo';
+type EstadoCelda = 'libre' | 'ocupado' | 'nuevo' | 'cerrado';
 
 interface BloqueAcademico {
   inicio: string;
@@ -253,6 +253,9 @@ export class ConfirmacionComponent implements OnInit, OnDestroy {
   }
 
   estadoCelda(dia: string, bloque: BloqueAcademico): EstadoCelda {
+    if (dia === 'SUNDAY' && this.aMinutos(bloque.fin) > 14 * 60) {
+      return 'cerrado';
+    }
     const inicio = this.aMinutos(bloque.inicio);
     const fin = this.aMinutos(bloque.fin);
     const r = this.reprogramacion;

@@ -28,7 +28,7 @@ import { HorarioService } from '../../services/horario.service';
   `
 })
 export class PortalDocenteComponent implements OnInit {
-  constructor(private horarioService: HorarioService) {}
+  constructor(private horarioService: HorarioService) { }
   ngOnInit(): void {
     this.horarioService.setRolActivo('Docente');
   }
@@ -55,7 +55,7 @@ export class PortalDocenteComponent implements OnInit {
   `
 })
 export class PortalEstudianteComponent implements OnInit {
-  constructor(private horarioService: HorarioService) {}
+  constructor(private horarioService: HorarioService) { }
   ngOnInit(): void {
     this.horarioService.setRolActivo('Estudiante');
   }
@@ -83,7 +83,7 @@ export class PortalEstudianteComponent implements OnInit {
   `
 })
 export class PortalCoordinadorComponent implements OnInit {
-  constructor(private horarioService: HorarioService) {}
+  constructor(private horarioService: HorarioService) { }
   ngOnInit(): void {
     this.horarioService.setRolActivo('Coordinador Académico');
   }

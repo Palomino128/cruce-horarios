@@ -108,7 +108,7 @@ export class ConsultaHorarioComponent implements OnInit {
     private router: Router,
     private location: Location,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const modoRuta = this.route.snapshot.data['modo'] as TipoConsulta | undefined;
@@ -263,6 +263,10 @@ export class ConsultaHorarioComponent implements OnInit {
 
   get puedeContinuarAReprogramacion(): boolean {
     return !this.soloEstudiante && !this.cargando && this.persona !== null;
+  }
+
+  esBloqueCerrado(diaClave: string, bloque: BloqueAcademico): boolean {
+    return diaClave === 'SUNDAY' && this.aMinutos(bloque.fin) > 14 * 60;
   }
 
   eventosEnCelda(diaClave: string, bloque: BloqueAcademico): EventoCalendario[] {

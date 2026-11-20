@@ -57,11 +57,12 @@ const SALONES_PRINCIPALES = [
 })
 export class RegistroReprogramacionComponent implements OnInit {
   readonly INTERVALO_MINUTOS = 15;
-  readonly HORA_MIN_MINUTOS = 7 * 60;        // 07:00 am
-  readonly HORA_MAX_MINUTOS = 22 * 60 + 30;  // 10:30 pm (22:30)
+  readonly HORA_MIN_MINUTOS = 7 * 60;         // 07:00 am
+  readonly HORA_MAX_MINUTOS = 22 * 60 + 30;   // 10:30 pm (22:30)
+  readonly HORA_MAX_DOMINGO_MINUTOS = 14 * 60; // 02:00 pm (14:00)
 
   readonly reglas = [
-    'La hora académica dura 45 minutos (sesiones de 90 min = 2 horas académicas) en el horario universitario de 07:00 am a 10:30 pm.',
+    'La hora académica dura 45 minutos (sesiones de 90 min). Horario universitario: Lun–Sáb de 07:00 am a 10:30 pm; Domingos de 07:00 am a 02:00 pm.',
     'Los alumnos matriculados en el curso (mínimo 15 por sección, sin repetir estudiantes) ya están inscritos; el sistema calcula el porcentaje de asistencia.',
     'El sistema recomienda fechas y horarios con asistencia mayor al 50%, manteniendo visibles todas las opciones (altas y bajas).',
     'Debe existir un intervalo mínimo de 15 minutos de traslado del docente entre clases consecutivas.',
@@ -228,14 +229,25 @@ export class RegistroReprogramacionComponent implements OnInit {
     if (fin <= ini) {
       return 'La hora de fin debe ser posterior a la hora de inicio.';
     }
-    if (ini < this.HORA_MIN_MINUTOS || fin > this.HORA_MAX_MINUTOS) {
-      return 'El horario universitario permitido es de 07:00 am a 10:30 pm (22:30).';
+    if (this.diaSeleccionado === 'SUNDAY') {
+      if (ini < this.HORA_MIN_MINUTOS || fin > this.HORA_MAX_DOMINGO_MINUTOS) {
+        return 'Los domingos el horario universitario permitido es de 07:00 am a 02:00 pm (14:00).';
+      }
+    } else if (ini < this.HORA_MIN_MINUTOS || fin > this.HORA_MAX_MINUTOS) {
+      return 'El horario universitario permitido de lunes a sábado es de 07:00 am a 10:30 pm (22:30).';
     }
     const duracion = fin - ini;
     if (duracion < 45 || duracion % 45 !== 0) {
       return `La duración debe ser múltiplo de la hora académica de 45 minutos (ej. 45 min, 90 min o 135 min). Actual: ${duracion} min.`;
     }
     return '';
+  }
+
+  esFranjaPermitidaEnDia(dia: string, franja: FranjaHoraria): boolean {
+    if (dia === 'SUNDAY') {
+      return this.aMinutos(franja.fin) <= this.HORA_MAX_DOMINGO_MINUTOS;
+    }
+    return true;
   }
 
   get alertaIntervaloTraslado(): string {

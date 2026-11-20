@@ -2,7 +2,7 @@
   <div class="page-head">
     <div class="head-row">
       <div>
-        <span class="page-kicker">CONSULTA DE HORARIOS ACADÉMICOS · 07:00 AM – 10:30 PM</span>
+        <span class="page-kicker">CONSULTA DE HORARIOS ACADÉMICOS · LUN–SÁB 07:00–22:30 · DOM 07:00–14:00</span>
         <h2>
           @if (soloEstudiante) {
             Mis Horarios, Salones y Clases de Recuperación
@@ -155,8 +155,8 @@
       <article class="card calendar-card">
         <header class="card-head head-sky">
           <div>
-            <h3>Calendario Semanal (Bloques Académicos de 45 min · 07:00 am – 10:30 pm)</h3>
-            <span class="card-sub">Azul marino: horario regular · Celeste: clase de recuperación</span>
+            <h3>Calendario Semanal (Lun–Sáb 07:00–22:30 · Dom 07:00–14:00)</h3>
+            <span class="card-sub">Azul marino: horario regular · Celeste: clase de recuperación · Gris: cerrado</span>
           </div>
           <div class="cal-header-right">
             <div class="cal-legend">
@@ -184,13 +184,17 @@
                 <tr>
                   <td class="bloque-col">{{ b.etiqueta }}</td>
                   @for (d of diasCalendario; track d.clave) {
-                    <td>
-                      @for (ev of eventosEnCelda(d.clave, b); track $index) {
-                        <div class="cal-event" [class.cal-rec]="ev.tipo === 'recuperacion'">
-                          <strong>{{ ev.curso }}</strong>
-                          <span>{{ ev.aula }} · {{ ev.docenteCodigo }}</span>
-                          <small>{{ ev.detalle }}</small>
-                        </div>
+                    <td [class.celda-cerrada]="esBloqueCerrado(d.clave, b)">
+                      @if (esBloqueCerrado(d.clave, b)) {
+                        <span class="closed-lbl">Cerrado</span>
+                      } @else {
+                        @for (ev of eventosEnCelda(d.clave, b); track $index) {
+                          <div class="cal-event" [class.cal-rec]="ev.tipo === 'recuperacion'">
+                            <strong>{{ ev.curso }}</strong>
+                            <span>{{ ev.aula }} · {{ ev.docenteCodigo }}</span>
+                            <small>{{ ev.detalle }}</small>
+                          </div>
+                        }
                       }
                     </td>
                   }

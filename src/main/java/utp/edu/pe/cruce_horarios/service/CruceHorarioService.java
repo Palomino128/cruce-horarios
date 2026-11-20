@@ -26,6 +26,7 @@ public class CruceHorarioService {
 
     private static final LocalTime HORA_INICIO_UNIV = LocalTime.of(7, 0);
     private static final LocalTime HORA_FIN_UNIV = LocalTime.of(22, 30);
+    private static final LocalTime HORA_FIN_DOMINGO = LocalTime.of(14, 0);
     private static final int HORA_ACADEMICA_MIN = 45;
     private static final int INTERVALO_TRASLADO_MIN = 15;
 
@@ -88,7 +89,8 @@ public class CruceHorarioService {
             return Optional.of("Complete docente, curso, fecha, hora de inicio y hora de fin.");
         }
 
-        Optional<String> rangoError = validarFranjaHoraria(nueva.getHoraInicio(), nueva.getHoraFin());
+        Optional<String> rangoError = validarFranjaHoraria(
+                nueva.getFecha().getDayOfWeek(), nueva.getHoraInicio(), nueva.getHoraFin());
         if (rangoError.isPresent()) {
             return rangoError;
         }
@@ -155,7 +157,7 @@ public class CruceHorarioService {
             return Optional.of("Todos los campos del horario regular son obligatorios.");
         }
 
-        Optional<String> rangoError = validarFranjaHoraria(h.getHoraInicio(), h.getHoraFin());
+        Optional<String> rangoError = validarFranjaHoraria(h.getDia(), h.getHoraInicio(), h.getHoraFin());
         if (rangoError.isPresent()) {
             return rangoError;
         }
@@ -190,12 +192,16 @@ public class CruceHorarioService {
         return Optional.empty();
     }
 
-    private Optional<String> validarFranjaHoraria(LocalTime hi, LocalTime hf) {
+    private Optional<String> validarFranjaHoraria(DayOfWeek dia, LocalTime hi, LocalTime hf) {
         if (!hf.isAfter(hi)) {
             return Optional.of("La hora de fin debe ser posterior a la hora de inicio.");
         }
-        if (hi.isBefore(HORA_INICIO_UNIV) || hf.isAfter(HORA_FIN_UNIV)) {
-            return Optional.of("El horario universitario permitido es de 07:00 am a 10:30 pm (22:30).");
+        if (dia == DayOfWeek.SUNDAY) {
+            if (hi.isBefore(HORA_INICIO_UNIV) || hf.isAfter(HORA_FIN_DOMINGO)) {
+                return Optional.of("Los domingos el horario universitario permitido es de 07:00 am a 02:00 pm (14:00).");
+            }
+        } else if (hi.isBefore(HORA_INICIO_UNIV) || hf.isAfter(HORA_FIN_UNIV)) {
+            return Optional.of("El horario universitario permitido de lunes a sábado es de 07:00 am a 10:30 pm (22:30).");
         }
         long minutos = Duration.between(hi, hf).toMinutes();
         if (minutos < HORA_ACADEMICA_MIN || minutos % HORA_ACADEMICA_MIN != 0) {
@@ -348,6 +354,9 @@ public class CruceHorarioService {
             for (LocalTime[] franja : franjas) {
                 LocalTime hi = franja[0];
                 LocalTime hf = franja[1];
+                if (dia == DayOfWeek.SUNDAY && hf.isAfter(HORA_FIN_DOMINGO)) {
+                    continue;
+                }
 
                 Reprogramacion candidata = new Reprogramacion();
                 candidata.setDocenteCodigo(doc);
