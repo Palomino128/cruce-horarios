@@ -44,6 +44,8 @@ $muted: #475569;
 }
 
 .view-toggle {
+  position: relative;
+  z-index: 5;
   display: inline-flex;
   background: #ffffff;
   border: 1px solid $border;
@@ -61,11 +63,49 @@ $muted: #475569;
     font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover:not(.active) {
+      background: $sky-soft;
+      color: $navy;
+    }
 
     &.active {
       background: $navy;
       color: #ffffff;
     }
+  }
+}
+
+.vista-horario-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  scroll-margin-top: 150px;
+}
+
+.cal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.btn-switch-view {
+  padding: 0.34rem 0.78rem;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: $sky-bright;
+    border-color: $sky-bright;
   }
 }
 

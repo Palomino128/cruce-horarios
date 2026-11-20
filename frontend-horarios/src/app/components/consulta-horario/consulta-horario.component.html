@@ -25,10 +25,22 @@
 
       @if (persona) {
         <div class="view-toggle" role="tablist" aria-label="Modo de visualización">
-          <button type="button" class="toggle-btn" [class.active]="modoVista === 'tabla'" (click)="modoVista = 'tabla'">
-            Vista Tabla
+          <button
+            type="button"
+            class="toggle-btn"
+            role="tab"
+            [attr.aria-selected]="modoVista() === 'tabla'"
+            [class.active]="modoVista() === 'tabla'"
+            (click)="cambiarVista('tabla')">
+            ☰ Vista Tabla
           </button>
-          <button type="button" class="toggle-btn" [class.active]="modoVista === 'calendario'" (click)="modoVista = 'calendario'">
+          <button
+            type="button"
+            class="toggle-btn"
+            role="tab"
+            [attr.aria-selected]="modoVista() === 'calendario'"
+            [class.active]="modoVista() === 'calendario'"
+            (click)="cambiarVista('calendario')">
             Calendario Semanal (Lun–Dom)
           </button>
         </div>
@@ -138,16 +150,22 @@
       </article>
     </div>
 
-    @if (modoVista === 'calendario') {
+    <div id="vistaHorarioPanel" class="vista-horario-panel">
+    @if (modoVista() === 'calendario') {
       <article class="card calendar-card">
         <header class="card-head head-sky">
           <div>
             <h3>Calendario Semanal (Bloques Académicos de 45 min · 07:00 am – 10:30 pm)</h3>
             <span class="card-sub">Azul marino: horario regular · Celeste: clase de recuperación</span>
           </div>
-          <div class="cal-legend">
-            <span><i class="dot reg"></i> Regular</span>
-            <span><i class="dot rec"></i> Recuperación</span>
+          <div class="cal-header-right">
+            <div class="cal-legend">
+              <span><i class="dot reg"></i> Regular</span>
+              <span><i class="dot rec"></i> Recuperación</span>
+            </div>
+            <button type="button" class="btn-switch-view" (click)="cambiarVista('tabla')">
+              ← Ver en Vista Tabla
+            </button>
           </div>
         </header>
 
@@ -191,11 +209,14 @@
           </div>
           <div class="page-size-box">
             <label for="tamHor">Filas:</label>
-            <select id="tamHor" [(ngModel)]="tamPaginaHorarios" (ngModelChange)="paginaHorarios = 1">
+            <select id="tamHor" name="tamHor" [ngModel]="tamPaginaHorarios" (ngModelChange)="cambiarTamPaginaHorarios($event)">
               <option [ngValue]="5">5</option>
               <option [ngValue]="10">10</option>
               <option [ngValue]="20">20</option>
             </select>
+            <button type="button" class="btn-switch-view" (click)="cambiarVista('calendario')">
+              Calendario Semanal →
+            </button>
           </div>
         </header>
 
@@ -342,6 +363,7 @@
         }
       </article>
     }
+    </div>
   }
 
   <div class="card nav-footer-card">

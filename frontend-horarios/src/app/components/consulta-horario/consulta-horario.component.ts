@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -75,7 +75,7 @@ export class ConsultaHorarioComponent implements OnInit {
 
   tipo: TipoConsulta = 'docente';
   codigo = 'DOC-101';
-  modoVista: ModoVisualizacion = 'tabla';
+  readonly modoVista = signal<ModoVisualizacion>('tabla');
   mostrarSugerencias = false;
 
   esVistaPropia = false;
@@ -219,10 +219,28 @@ export class ConsultaHorarioComponent implements OnInit {
     return this.horarios.slice(ini, ini + this.tamPaginaHorarios);
   }
 
+  cambiarVista(modo: ModoVisualizacion): void {
+    this.modoVista.set(modo);
+    this.cdr.detectChanges();
+    if (typeof document !== 'undefined') {
+      const panel = document.getElementById('vistaHorarioPanel');
+      if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
+
+  cambiarTamPaginaHorarios(tam: number): void {
+    this.tamPaginaHorarios = Number(tam) || 5;
+    this.paginaHorarios = 1;
+    this.cdr.markForCheck();
+  }
+
   cambiarPaginaHorarios(delta: number): void {
     const next = this.paginaHorarios + delta;
     if (next >= 1 && next <= this.totalPaginasHorarios) {
       this.paginaHorarios = next;
+      this.cdr.markForCheck();
     }
   }
 
@@ -239,6 +257,7 @@ export class ConsultaHorarioComponent implements OnInit {
     const next = this.paginaReprog + delta;
     if (next >= 1 && next <= this.totalPaginasReprog) {
       this.paginaReprog = next;
+      this.cdr.markForCheck();
     }
   }
 
