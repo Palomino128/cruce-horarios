@@ -1,0 +1,114 @@
+/* Paleta Institucional: Negro (#111827), Rojo (#c8102e), Azul (#1e3a8a), Blanco (#ffffff) y Grises (#f3f4f6, #e5e7eb, #4b5563) */
+$black-main: #111827;
+$black-soft: #1f2937;
+$red-primary: #c8102e;
+$red-hover: #a50d26;
+$blue-primary: #1e3a8a;
+$blue-accent: #1d4ed8;
+$gray-bg: #f3f4f6;
+$gray-border: #e5e7eb;
+$gray-text: #4b5563;
+$gray-muted: #6b7280;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background-color: $gray-bg;
+  color: $black-main;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid $gray-border;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.58rem 1.15rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &.btn-primary {
+    background-color: $blue-primary;
+    color: #ffffff;
+    &:hover:not(:disabled) {
+      background-color: $black-main;
+    }
+  }
+
+  &.btn-danger {
+    background-color: $red-primary;
+    color: #ffffff;
+    &:hover:not(:disabled) {
+      background-color: $red-hover;
+    }
+  }
+
+  &.btn-secondary {
+    background-color: #ffffff;
+    color: $gray-text;
+    border-color: #d1d5db;
+    &:hover:not(:disabled) {
+      background-color: $gray-bg;
+      color: $black-main;
+      border-color: $black-soft;
+    }
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  &.badge-solicitado {
+    background-color: #eff6ff;
+    color: $blue-primary;
+    border: 1px solid #93c5fd;
+  }
+
+  &.badge-confirmado,
+  &.badge-success {
+    background-color: $black-main;
+    color: #ffffff;
+    border: 1px solid $black-soft;
+  }
+
+  &.badge-info {
+    background-color: #f3f4f6;
+    color: $blue-primary;
+    border: 1px solid #cbd5e1;
+  }
+
+  &.badge-danger {
+    background-color: #fef2f2;
+    color: $red-primary;
+    border: 1px solid #fca5a5;
+  }
+}

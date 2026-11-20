@@ -1,0 +1,365 @@
+$negro: #111827;
+$negro-suave: #1f2937;
+$rojo: #c8102e;
+$rojo-hover: #a50d26;
+$azul: #1e3a8a;
+$azul-claro: #eff6ff;
+$plomo-fondo: #f3f4f6;
+$plomo-borde: #e5e7eb;
+$plomo-texto: #4b5563;
+$plomo-suave: #6b7280;
+$blanco: #ffffff;
+
+.auth-shell {
+  min-height: calc(100vh - 190px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.card {
+  background: $blanco;
+  border: 1px solid $plomo-borde;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba($negro, 0.1);
+  overflow: hidden;
+}
+
+.selector-panel {
+  width: 100%;
+  max-width: 980px;
+}
+
+.selector-head {
+  background: $negro;
+  border-bottom: 4px solid $rojo;
+  color: $blanco;
+  padding: 1.75rem 2rem;
+  text-align: center;
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #93c5fd;
+    margin-bottom: 0.4rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  p {
+    color: #d1d5db;
+    font-size: 0.92rem;
+  }
+}
+
+.icons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+  background: $plomo-fondo;
+}
+
+.perfil-card {
+  background: $blanco;
+  border: 2px solid $plomo-borde;
+  border-radius: 12px;
+  padding: 2rem 1.4rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba($negro, 0.14);
+  }
+
+  .icono-circulo {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: $blanco;
+    transition: transform 0.18s ease;
+  }
+
+  &:hover .icono-circulo {
+    transform: scale(1.06);
+  }
+
+  &.azul {
+    border-top: 5px solid $azul;
+    .icono-circulo { background: $azul; }
+    .perfil-cta { color: $azul; }
+    &:hover { border-color: $azul; }
+  }
+
+  &.negro {
+    border-top: 5px solid $negro;
+    .icono-circulo { background: $negro; }
+    .perfil-cta { color: $negro; }
+    &:hover { border-color: $negro; }
+  }
+
+  &.rojo {
+    border-top: 5px solid $rojo;
+    .icono-circulo { background: $rojo; }
+    .perfil-cta { color: $rojo; }
+    &:hover { border-color: $rojo; }
+  }
+
+  .perfil-nombre {
+    font-size: 1.28rem;
+    font-weight: 800;
+    color: $negro;
+    margin-top: 0.2rem;
+  }
+
+  .perfil-desc {
+    font-size: 0.85rem;
+    color: $plomo-texto;
+    line-height: 1.45;
+    flex: 1;
+  }
+
+  .perfil-cta {
+    margin-top: 0.35rem;
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+}
+
+.login-card {
+  width: 100%;
+  max-width: 560px;
+}
+
+.login-head {
+  background: $negro;
+  border-bottom: 4px solid $rojo;
+  color: $blanco;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  .head-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .btn-back {
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid rgba($blanco, 0.3);
+    background: $negro-suave;
+    color: $blanco;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background: $azul;
+      border-color: $blanco;
+    }
+  }
+
+  .eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #93c5fd;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .role-chip {
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: $blanco;
+
+    &.azul { background: $azul; }
+    &.negro { background: $negro-suave; border: 1px solid rgba($blanco, 0.4); }
+    &.rojo { background: $rojo; }
+  }
+}
+
+.login-form {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+
+  label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: $negro;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  input,
+  select {
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.94rem;
+    background: $blanco;
+    color: $negro;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+      border-color: $azul;
+      box-shadow: 0 0 0 3px rgba($azul, 0.16);
+    }
+  }
+
+  .password-wrap {
+    display: flex;
+    gap: 0.45rem;
+
+    .btn-toggle {
+      padding: 0 0.9rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: $plomo-fondo;
+      color: $negro;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+
+      &:hover {
+        background: $plomo-borde;
+      }
+    }
+  }
+
+  .hint-pass {
+    font-size: 0.74rem;
+    color: $plomo-suave;
+
+    code {
+      color: $azul;
+      font-weight: 700;
+    }
+  }
+}
+
+.chips-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+
+  .chips-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $plomo-suave;
+  }
+
+  .chip {
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    background: $plomo-fondo;
+    color: $negro;
+    font-size: 0.76rem;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    cursor: pointer;
+
+    &:hover,
+    &.active {
+      background: $azul;
+      border-color: $azul;
+      color: $blanco;
+    }
+  }
+}
+
+.info-note {
+  padding: 0.75rem 0.95rem;
+  border-radius: 8px;
+  background: $azul-claro;
+  border-left: 4px solid $azul;
+  color: $negro;
+  font-size: 0.84rem;
+}
+
+.alert-error {
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: $rojo;
+  border-left: 4px solid $rojo;
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.btn-limpiar {
+  padding: 0.68rem 1.35rem;
+  border-radius: 6px;
+  border: 1px solid $negro;
+  background: $blanco;
+  color: $negro;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: $plomo-fondo;
+  }
+}
+
+.btn-login {
+  padding: 0.68rem 1.8rem;
+  border-radius: 6px;
+  border: none;
+  background: $rojo;
+  color: $blanco;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $rojo-hover;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

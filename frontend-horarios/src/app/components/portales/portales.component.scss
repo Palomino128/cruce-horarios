@@ -1,0 +1,56 @@
+$black: #111827;
+$red: #c8102e;
+$blue: #1e3a8a;
+
+.portal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.portal-banner {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 6px solid $blue;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.05);
+
+  &.banner-coordinador { border-left-color: $red; }
+  &.banner-estudiante { border-left-color: $black; }
+
+  .portal-kicker {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: $red;
+    margin-bottom: 0.2rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    color: $black;
+    margin-bottom: 0.2rem;
+  }
+
+  p {
+    font-size: 0.88rem;
+    color: #4b5563;
+  }
+
+  .portal-pill {
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    color: $black;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+}

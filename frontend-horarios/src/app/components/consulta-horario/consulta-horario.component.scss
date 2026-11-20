@@ -1,0 +1,382 @@
+$negro: #111827;
+$negro-suave: #1f2937;
+$rojo: #c8102e;
+$rojo-hover: #a50d26;
+$azul: #1e3a8a;
+$azul-claro: #eff6ff;
+$plomo-fondo: #f3f4f6;
+$plomo-borde: #e5e7eb;
+$plomo-texto: #4b5563;
+$plomo-suave: #6b7280;
+$blanco: #ffffff;
+
+.consulta {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.page-head {
+  .head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  h2 {
+    color: $negro;
+    font-size: 1.42rem;
+  }
+
+  p {
+    color: $plomo-texto;
+    font-size: 0.92rem;
+  }
+
+  .catalog-pill {
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: $azul-claro;
+    border: 1px solid #93c5fd;
+    color: $azul;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+}
+
+.card {
+  background: $blanco;
+  border: 1px solid $plomo-borde;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba($negro, 0.06);
+}
+
+.search-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  flex-wrap: wrap;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 185px;
+
+    &.grow {
+      flex: 1;
+    }
+
+    label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: $negro;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input,
+    select {
+      padding: 0.6rem 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.94rem;
+      background: $blanco;
+      color: $negro;
+
+      &:focus {
+        outline: none;
+        border-color: $azul;
+        box-shadow: 0 0 0 3px rgba($azul, 0.15);
+      }
+    }
+  }
+
+  .search-actions {
+    display: flex;
+    gap: 0.6rem;
+  }
+}
+
+.btn-primary {
+  padding: 0.62rem 1.55rem;
+  background: $azul;
+  color: $blanco;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $negro;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  padding: 0.62rem 1.2rem;
+  background: $blanco;
+  color: $negro;
+  border: 1px solid $negro;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: $plomo-fondo;
+  }
+}
+
+.alert {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+
+  &.alert-error {
+    background: #fef2f2;
+    color: $rojo;
+    border-left: 4px solid $rojo;
+  }
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+
+  &.accent-negro { border-top: 4px solid $negro; }
+  &.accent-azul { border-top: 4px solid $azul; }
+  &.accent-rojo { border-top: 4px solid $rojo; }
+
+  .info-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: $plomo-suave;
+  }
+
+  .info-value {
+    font-size: 1.22rem;
+    color: $negro;
+
+    &.info-salones {
+      font-size: 1.02rem;
+      color: $azul;
+    }
+  }
+
+  .info-sub {
+    font-size: 0.84rem;
+    color: $plomo-texto;
+  }
+}
+
+.table-card {
+  overflow: hidden;
+
+  .card-head {
+    padding: 0.85rem 1.25rem;
+    background: $negro;
+    border-bottom: 3px solid $rojo;
+
+    &.head-azul {
+      background: $azul;
+      border-bottom-color: $negro;
+    }
+
+    h3 {
+      font-size: 1rem;
+      color: $blanco;
+    }
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+
+    th {
+      background: $plomo-fondo;
+      color: $negro;
+      text-align: left;
+      padding: 0.7rem 1.15rem;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid $plomo-borde;
+    }
+
+    td {
+      padding: 0.7rem 1.15rem;
+      border-bottom: 1px solid $plomo-borde;
+      color: $negro;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .curso {
+      font-weight: 700;
+    }
+
+    .docente-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .code-badge {
+      display: inline-block;
+      padding: 0.16rem 0.52rem;
+      border-radius: 5px;
+      background: $negro;
+      color: $blanco;
+      font-weight: 700;
+      font-size: 0.76rem;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      white-space: nowrap;
+    }
+  }
+
+  .empty {
+    padding: 1.1rem 1.25rem;
+    color: $plomo-suave;
+    font-style: italic;
+  }
+}
+
+.salon-badge {
+  display: inline-block;
+  padding: 0.2rem 0.62rem;
+  border-radius: 6px;
+  background: $azul-claro;
+  border: 1px solid #93c5fd;
+  color: $azul;
+  font-weight: 700;
+  font-size: 0.78rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.badge-aprobado {
+  display: inline-block;
+  padding: 0.2rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: $azul;
+  color: $blanco;
+}
+
+.btn-row-action {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background: $rojo;
+  color: $blanco;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: $rojo-hover;
+  }
+}
+
+.student-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.25rem;
+  border-left: 5px solid $azul;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .student-badge {
+    padding: 0.24rem 0.7rem;
+    border-radius: 999px;
+    background: $negro;
+    color: $blanco;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-link {
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    border: 1px solid $rojo;
+    background: $blanco;
+    color: $rojo;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+
+    &:hover {
+      background: $rojo;
+      color: $blanco;
+    }
+  }
+}
+
+.docente-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.25rem;
+  border-radius: 10px;
+  background: $azul-claro;
+  border: 1px solid #bfdbfe;
+  border-left: 5px solid $azul;
+  color: $negro;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  .btn-cta {
+    padding: 0.55rem 1.15rem;
+    border-radius: 6px;
+    background: $rojo;
+    color: $blanco;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.84rem;
+    white-space: nowrap;
+
+    &:hover {
+      background: $rojo-hover;
+    }
+  }
+}

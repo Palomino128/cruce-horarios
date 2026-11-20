@@ -1,0 +1,226 @@
+<section class="consulta">
+  <div class="page-head">
+    <div class="head-row">
+      <div>
+        <h2>
+          @if (soloEstudiante) {
+            Mis Horarios, Salones y Clases de Recuperación
+          } @else if (esDocenteLogueado) {
+            Mi Horario, Cursos y Salones Asignados
+          } @else {
+            Consulta General de Horarios, Cursos y Salones
+          }
+        </h2>
+        <p>
+          @if (soloEstudiante) {
+            Vista de estudiante: consulta únicamente tus cursos matriculados, tus salones asignados y tus clases de recuperación.
+          } @else if (esDocenteLogueado) {
+            Consulta tus cursos asignados, tus salones y accede a recuperar sesiones revisando disponibilidad de lunes a domingo.
+          } @else {
+            Supervise la carga horaria regular, salones asignados y reprogramaciones de cualquiera de los 50 docentes o 1,000 estudiantes.
+          }
+        </p>
+      </div>
+      @if (!esVistaPropia && (docentesCatalogo.length || estudiantesCatalogo.length)) {
+        <span class="catalog-pill">
+          {{ docentesCatalogo.length | number }} docentes · {{ estudiantesCatalogo.length | number }} estudiantes
+        </span>
+      }
+    </div>
+  </div>
+
+  @if (!esVistaPropia) {
+    <form class="card search-card" (ngSubmit)="buscar()">
+      <div class="field">
+        <label for="tipoConsulta">Tipo de consulta</label>
+        <select id="tipoConsulta" name="tipo" [ngModel]="tipo" (ngModelChange)="cambiarTipo($event)" [disabled]="!!modoFijo">
+          <option value="docente">Docente</option>
+          <option value="estudiante">Estudiante</option>
+        </select>
+      </div>
+
+      <div class="field grow">
+        <label for="codigo">Código Institucional</label>
+        <input
+          id="codigo"
+          name="codigo"
+          type="text"
+          list="codigosCatalogo"
+          [(ngModel)]="codigo"
+          [placeholder]="placeholder"
+          autocomplete="off" />
+        <datalist id="codigosCatalogo">
+          @if (tipo === 'docente') {
+            @for (d of docentesCatalogo; track d.codigo) {
+              <option [value]="d.codigo">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</option>
+            }
+          } @else {
+            @for (e of estudiantesCatalogo; track e.codigo) {
+              <option [value]="e.codigo">{{ e.codigo }} — {{ e.nombres }} {{ e.apellidos }}</option>
+            }
+          }
+        </datalist>
+      </div>
+
+      <div class="search-actions">
+        <button class="btn-secondary" type="button" (click)="limpiarBusqueda()">Limpiar</button>
+        <button class="btn-primary" type="submit" [disabled]="cargando">
+          {{ cargando ? 'Buscando…' : 'Buscar' }}
+        </button>
+      </div>
+    </form>
+  } @else if (soloEstudiante) {
+    <div class="card student-banner">
+      <div>
+        <span class="student-badge">ESTUDIANTE · SOLO CONSULTA</span>
+        <strong>{{ persona ? persona.codigo + ' · ' + persona.nombres + ' ' + persona.apellidos : 'Estudiante: ' + codigo }}</strong>
+      </div>
+      <button type="button" class="btn-link" (click)="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  } @else if (esDocenteLogueado) {
+    <div class="card student-banner">
+      <div>
+        <span class="student-badge">DOCENTE TITULAR · CARGA PROPIA</span>
+        <strong>{{ persona ? persona.codigo + ' · ' + persona.nombres + ' ' + persona.apellidos : 'Docente: ' + codigo }}</strong>
+      </div>
+      <button type="button" class="btn-link" (click)="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  }
+
+  @if (esDocenteLogueado || (tipo === 'docente' && persona && !soloEstudiante)) {
+    <div class="docente-cta">
+      <span>¿Deseas recuperar o reprogramar una clase viendo los salones disponibles y no disponibles de lunes a domingo?</span>
+      <a routerLink="/registro-reprogramacion" class="btn-cta">
+        Recuperar Clase (Salones Lun–Dom) →
+      </a>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+
+  @if (persona) {
+    <div class="info-cards">
+      <article class="card info-card accent-negro">
+        <span class="info-label">{{ tipo === 'docente' ? 'DOCENTE TITULAR' : 'ESTUDIANTE' }}</span>
+        <strong class="info-value">{{ persona.nombres }} {{ persona.apellidos }}</strong>
+        <span class="info-sub">Código: {{ persona.codigo }}</span>
+      </article>
+
+      <article class="card info-card accent-azul">
+        <span class="info-label">CARGA HORARIA SEMANAL</span>
+        <strong class="info-value">{{ cargaSemanalHoras }} h</strong>
+        <span class="info-sub">{{ horarios.length }} curso(s) · {{ diasConClase }} día(s) con clase</span>
+      </article>
+
+      <article class="card info-card accent-azul">
+        <span class="info-label">SALONES ASIGNADOS</span>
+        <strong class="info-value info-salones">{{ salonesResumen }}</strong>
+        <span class="info-sub">{{ salonesAsignados.length }} salón(es)</span>
+      </article>
+
+      <article class="card info-card accent-rojo">
+        <span class="info-label">CLASES DE RECUPERACIÓN</span>
+        <strong class="info-value">{{ reprogramaciones.length }}</strong>
+        <span class="info-sub">Programadas sin cruces</span>
+      </article>
+    </div>
+
+    <article class="card table-card">
+      <header class="card-head">
+        <h3>Horario Regular de Cursos y Salones</h3>
+      </header>
+
+      @if (horarios.length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>CURSO</th>
+                <th>DOCENTE (CÓDIGO)</th>
+                <th>DÍA</th>
+                <th>HORA INICIO</th>
+                <th>HORA FIN</th>
+                <th>SALÓN / AULA</th>
+                @if (!soloEstudiante) {
+                  <th>ACCIÓN</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of horarios; track $index) {
+                <tr>
+                  <td class="curso">{{ h.curso }}</td>
+                  <td>
+                    <div class="docente-cell">
+                      <span class="code-badge">{{ h.docenteCodigo }}</span>
+                      <span>{{ nombreDocente(h.docenteCodigo) }}</span>
+                    </div>
+                  </td>
+                  <td>{{ diaEs(h.dia) }}</td>
+                  <td>{{ hora(h.horaInicio) }}</td>
+                  <td>{{ hora(h.horaFin) }}</td>
+                  <td><span class="salon-badge">{{ h.aula || 'Por asignar' }}</span></td>
+                  @if (!soloEstudiante) {
+                    <td>
+                      <button type="button" class="btn-row-action" (click)="irARecuperarCurso(h)">
+                        Recuperar clase →
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty">No hay horarios regulares registrados para este código.</p>
+      }
+    </article>
+
+    <article class="card table-card">
+      <header class="card-head head-azul">
+        <h3>Clases de Recuperación / Reprogramaciones Programadas</h3>
+      </header>
+
+      @if (reprogramaciones.length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>CURSO</th>
+                <th>DOCENTE (CÓDIGO)</th>
+                <th>FECHA DE RECUPERACIÓN</th>
+                <th>HORA INICIO</th>
+                <th>HORA FIN</th>
+                <th>SALÓN / AULA</th>
+                <th>ESTADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of reprogramaciones; track $index) {
+                <tr>
+                  <td class="curso">{{ r.curso }}</td>
+                  <td>
+                    <div class="docente-cell">
+                      <span class="code-badge">{{ r.docenteCodigo }}</span>
+                      <span>{{ nombreDocente(r.docenteCodigo) }}</span>
+                    </div>
+                  </td>
+                  <td>{{ fechaEs(r.fecha) }}</td>
+                  <td>{{ hora(r.horaInicio) }}</td>
+                  <td>{{ hora(r.horaFin) }}</td>
+                  <td><span class="salon-badge">{{ r.aula || 'Por asignar' }}</span></td>
+                  <td><span class="badge-aprobado">Aprobado</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="empty">No hay clases de recuperación registradas para los cursos consultados.</p>
+      }
+    </article>
+  }
+</section>

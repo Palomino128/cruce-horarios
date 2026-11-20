@@ -1,0 +1,133 @@
+<section class="auth-shell">
+  @if (pasoPantalla === 'seleccion') {
+    <!-- PANTALLA 1: Selección de Perfil con Iconos y Nombres -->
+    <div class="selector-panel card">
+      <header class="selector-head">
+        <span class="eyebrow">PORTAL DE ACCESO INSTITUCIONAL</span>
+        <h2>Seleccione su Perfil Institucional para Iniciar Sesión</h2>
+        <p>Todas las cuentas académicas ya se encuentran habilitadas. Elija su rol para continuar al inicio de sesión.</p>
+      </header>
+
+      <div class="icons-grid">
+        @for (p of perfiles; track p.rol) {
+          <button type="button" class="perfil-card" [class]="'perfil-card ' + p.claseColor" (click)="elegirPerfil(p.rol)">
+            <div class="icono-circulo" aria-hidden="true">
+              @if (p.rol === 'Estudiante') {
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+              } @else if (p.rol === 'Docente') {
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                  <path d="M6 8h6M6 12h4"></path>
+                </svg>
+              } @else {
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <path d="M9 12l2 2 4-4"></path>
+                </svg>
+              }
+            </div>
+            <h3 class="perfil-nombre">{{ p.titulo }}</h3>
+            <p class="perfil-desc">{{ p.subtitulo }}</p>
+            <span class="perfil-cta">Ingresar →</span>
+          </button>
+        }
+      </div>
+    </div>
+  } @else {
+    <!-- PANTALLA 2: Iniciar Sesión con Cuenta Ya Creada -->
+    <article class="login-card card">
+      <header class="login-head">
+        <div class="head-left">
+          <button type="button" class="btn-back" (click)="volverASeleccion()">← Cambiar perfil</button>
+          <div>
+            <span class="eyebrow">INICIO DE SESIÓN INSTITUCIONAL</span>
+            <h2>Iniciar Sesión — {{ perfilActivo.titulo }}</h2>
+          </div>
+        </div>
+        <span class="role-chip" [class]="'role-chip ' + perfilActivo.claseColor">{{ perfilActivo.titulo }}</span>
+      </header>
+
+      <form class="login-form" (ngSubmit)="iniciarSesion()">
+        <div class="field">
+          <label for="selectorCuenta">Seleccionar Cuenta Registrada ({{ cuentasDelPerfil.length }} disponibles)</label>
+          <select id="selectorCuenta" name="selectorCuenta" [(ngModel)]="codigo" (ngModelChange)="error = ''">
+            @for (c of cuentasDelPerfil; track c.codigo) {
+              <option [value]="c.codigo">{{ c.codigo }} — {{ c.nombres }} {{ c.apellidos }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="loginCodigo">Código Institucional</label>
+          <input
+            id="loginCodigo"
+            name="codigo"
+            type="text"
+            autocomplete="username"
+            list="cuentasDatalist"
+            [(ngModel)]="codigo"
+            [placeholder]="placeholderCodigo" />
+          <datalist id="cuentasDatalist">
+            @for (c of cuentasDelPerfil; track c.codigo) {
+              <option [value]="c.codigo">{{ c.codigo }} — {{ c.nombres }} {{ c.apellidos }}</option>
+            }
+          </datalist>
+        </div>
+
+        @if (perfilActivo.ejemplos.length) {
+          <div class="chips-row">
+            <span class="chips-label">Cuentas frecuentes:</span>
+            @for (ej of perfilActivo.ejemplos; track ej) {
+              <button type="button" class="chip" [class.active]="codigo.toUpperCase() === ej" (click)="usarEjemplo(ej)">
+                {{ ej }}
+              </button>
+            }
+          </div>
+        }
+
+        <div class="field">
+          <label for="loginPassword">Contraseña</label>
+          <div class="password-wrap">
+            <input
+              id="loginPassword"
+              name="password"
+              [type]="mostrarPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              [(ngModel)]="password"
+              placeholder="Ingrese su contraseña" />
+            <button type="button" class="btn-toggle" (click)="togglePassword()">
+              {{ mostrarPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          <small class="hint-pass">Contraseña institucional habilitada para pruebas: <code>utp2026</code></small>
+        </div>
+
+        @if (rolSeleccionado === 'Estudiante') {
+          <p class="info-note">
+            Acceso de solo lectura: al iniciar sesión visualizarás únicamente tus cursos, tus salones asignados y tus clases de recuperación.
+          </p>
+        } @else if (rolSeleccionado === 'Docente') {
+          <p class="info-note">
+            Al iniciar sesión verás tus cursos, horarios y salones asignados, y podrás recuperar clases consultando los salones disponibles de lunes a domingo.
+          </p>
+        }
+
+        @if (error) {
+          <div class="alert-error" role="alert">{{ error }}</div>
+        }
+
+        <div class="actions">
+          <button type="button" class="btn-limpiar" (click)="limpiarFormulario()">Limpiar</button>
+          <button type="submit" class="btn-login" [disabled]="cargando">
+            {{ cargando ? 'Verificando…' : 'Iniciar Sesión' }}
+          </button>
+        </div>
+      </form>
+    </article>
+  }
+</section>

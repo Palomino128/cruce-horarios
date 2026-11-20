@@ -1,0 +1,33 @@
+# Maven / Spring Boot
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+
+# Angular / Node
+frontend-horarios/node_modules/
+frontend-horarios/dist/
+frontend-horarios/.angular/
+
+# Environment / secretos
+.env
+.env.local
+.env.*.local
+application-local.properties
+**/application-local.properties
+!.env.example
+
+# IDE / OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+.neon
+node_modules/
+
+# Python / Temporales
+.venv/
+migracion_horarios/.venv/
+__pycache__/
+*.tmp
+~$*.docx

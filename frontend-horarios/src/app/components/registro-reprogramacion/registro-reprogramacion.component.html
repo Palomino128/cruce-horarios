@@ -1,0 +1,301 @@
+<section class="registro">
+  <div class="page-head">
+    <h2>Registrar Reprogramación / Recuperación de Clase</h2>
+    <p>Valida cruces del docente y estudiantes matriculados, elige un salón disponible y revisa la disponibilidad de salones de lunes a domingo.</p>
+  </div>
+
+  @if (esSoloEstudiante) {
+    <div class="alert alert-conflict">Solo los docentes o coordinadores pueden registrar recuperaciones de clase.</div>
+  } @else {
+    <div class="layout">
+      <!-- Columna izquierda -->
+      <aside class="col-left">
+        <article class="card rules-card">
+          <header class="card-head">
+            <h3>Reglas de Asignación</h3>
+            <span class="card-sub">(Directiva Académica Res. D-2025-04)</span>
+          </header>
+          <ol>
+            @for (r of reglas; track $index) {
+              <li>{{ r }}</li>
+            }
+          </ol>
+        </article>
+
+        <article class="card day-card">
+          <header class="card-head head-azul">
+            <h3>CARGA DEL DÍA</h3>
+            <span class="day-pill">{{ diaSeleccionadoEs }}</span>
+          </header>
+
+          @if (!modelo.docenteCodigo || !modelo.fecha) {
+            <p class="empty">Ingrese el código del docente y la fecha para ver su carga del día.</p>
+          } @else if (cargaDelDia.length) {
+            <ul class="day-list">
+              @for (h of cargaDelDia; track $index) {
+                <li>
+                  <span class="time">{{ hora(h.horaInicio) }} – {{ hora(h.horaFin) }}</span>
+                  <span class="course">{{ h.curso }}</span>
+                  <span class="meta">{{ h.docenteCodigo }} · Salón {{ h.aula || 'Por asignar' }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="empty ok">Sin clases regulares ese día: horario docente disponible.</p>
+          }
+        </article>
+      </aside>
+
+      <!-- Columna derecha -->
+      <article class="card form-card">
+        <header class="card-head">
+          <h3>Datos de la Reprogramación y Salón</h3>
+        </header>
+
+        <form #f="ngForm" (ngSubmit)="guardar(f)" novalidate>
+          <div class="grid">
+            <div class="field">
+              <label for="docenteCodigo">Código Docente</label>
+              <input id="docenteCodigo" name="docenteCodigo" type="text" placeholder="DOC-101" required
+                     [attr.list]="esDocenteEnSesion ? null : 'docentesCatalogo'"
+                     [readonly]="esDocenteEnSesion"
+                     autocomplete="off"
+                     [(ngModel)]="modelo.docenteCodigo" (ngModelChange)="onDocenteChange()"
+                     (blur)="cargarHorariosDocente()" #doc="ngModel" />
+              <datalist id="docentesCatalogo">
+                @for (d of docentesCatalogo; track d.codigo) {
+                  <option [value]="d.codigo">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</option>
+                }
+              </datalist>
+              @if (docenteSeleccionado; as d) {
+                <small class="hint-docente">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</small>
+              }
+              @if (doc.invalid && doc.touched) {
+                <small class="err">El código del docente es obligatorio.</small>
+              }
+            </div>
+
+            <div class="field">
+              <label for="curso">Curso</label>
+              @if (esDocenteEnSesion && cursosSugeridos.length) {
+                <select id="curso" name="curso" required [(ngModel)]="modelo.curso">
+                  @for (h of cursosSugeridos; track h.curso) {
+                    <option [value]="h.curso">
+                      {{ h.curso }} ({{ diaEs(h.dia) }} {{ hora(h.horaInicio) }}–{{ hora(h.horaFin) }} · Salón {{ h.aula }})
+                    </option>
+                  }
+                </select>
+              } @else {
+                <input id="curso" name="curso" type="text" placeholder="Desarrollo Web Integrado" required
+                       list="cursosDocente" autocomplete="off"
+                       [(ngModel)]="modelo.curso" (ngModelChange)="onCursoChange()" />
+                <datalist id="cursosDocente">
+                  @for (h of cursosSugeridos; track h.curso) {
+                    <option [value]="h.curso">
+                      {{ h.docenteCodigo }} — {{ nombreDocente(h.docenteCodigo) }} ({{ diaEs(h.dia) }} {{ hora(h.horaInicio) }}–{{ hora(h.horaFin) }})
+                    </option>
+                  }
+                </datalist>
+              }
+              @if (cursoSeleccionadoInfo; as info) {
+                <small class="hint-docente">Titular: {{ info.docenteCodigo }} — {{ nombreDocente(info.docenteCodigo) }} · Salón habitual: {{ info.aula }}</small>
+              }
+              @if (f.controls['curso']?.invalid && f.controls['curso']?.touched) {
+                <small class="err">El curso es obligatorio.</small>
+              }
+            </div>
+
+            <div class="field">
+              <label for="fecha">Nueva Fecha</label>
+              <input id="fecha" name="fecha" type="date" required [(ngModel)]="modelo.fecha" #fec="ngModel" />
+              @if (fec.invalid && fec.touched) {
+                <small class="err">Seleccione la fecha.</small>
+              }
+            </div>
+
+            <div class="field-pair">
+              <div class="field">
+                <label for="horaInicio">Hora Inicio</label>
+                <input id="horaInicio" name="horaInicio" type="time" required [(ngModel)]="modelo.horaInicio" #hi="ngModel" />
+                @if (hi.invalid && hi.touched) {
+                  <small class="err">Obligatoria.</small>
+                }
+              </div>
+              <div class="field">
+                <label for="horaFin">Hora Fin</label>
+                <input id="horaFin" name="horaFin" type="time" required [(ngModel)]="modelo.horaFin" #hf="ngModel" />
+                @if (hf.invalid && hf.touched) {
+                  <small class="err">Obligatoria.</small>
+                }
+              </div>
+            </div>
+
+            <div class="field span-2">
+              <label for="aula">Salón / Aula (opcional: automático o elige uno disponible)</label>
+              <input id="aula" name="aula" type="text" placeholder="Automático o elige un salón disponible (ej. A101)"
+                     list="salonesList" autocomplete="off" [(ngModel)]="modelo.aula" />
+              <datalist id="salonesList">
+                @for (s of salonesCatalogo; track s) {
+                  <option [value]="s">Salón {{ s }}</option>
+                }
+              </datalist>
+            </div>
+          </div>
+
+          <!-- Disponibilidad de salones en vivo para la fecha y franja ingresadas -->
+          @if (tieneFechaYFranja) {
+            <div class="live-salones">
+              <div class="live-group">
+                <strong>✔ Salones Disponibles ({{ salonesDisponiblesEnFranja.length }}) para {{ diaSeleccionadoEs }} {{ hora(modelo.horaInicio) }}–{{ hora(modelo.horaFin) }}:</strong>
+                <div class="chip-wrap">
+                  @for (s of salonesDisponiblesEnFranja.slice(0, 14); track s) {
+                    <button type="button" class="salon-chip ok" [class.active]="modelo.aula?.toUpperCase() === s" (click)="seleccionarSalon(s)">
+                      ✔ {{ s }}
+                    </button>
+                  }
+                  @if (salonesDisponiblesEnFranja.length > 14) {
+                    <span class="more-info">+{{ salonesDisponiblesEnFranja.length - 14 }} salones más disponibles</span>
+                  }
+                </div>
+              </div>
+
+              @if (salonesOcupadosEnFranja.length) {
+                <div class="live-group">
+                  <strong>✖ Salones No Disponibles / Ocupados ({{ salonesOcupadosEnFranja.length }}):</strong>
+                  <div class="chip-wrap">
+                    @for (o of salonesOcupadosEnFranja; track $index) {
+                      <span class="salon-chip busy">✖ {{ o.aula }} · {{ o.curso }} ({{ o.docenteCodigo }})</span>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <p class="all-free">Todos los salones se encuentran libres en esta franja horaria.</p>
+              }
+            </div>
+          }
+
+          @if (estado === 'ok') {
+            <div class="alert alert-ok" role="status">
+              <div class="alert-body">
+                <strong>✔ {{ mensaje }}</strong>
+                <span>{{ modelo.docenteCodigo }} · {{ modelo.curso }} · {{ modelo.fecha }} {{ hora(modelo.horaInicio) }}–{{ hora(modelo.horaFin) }} {{ modelo.aula ? '· Salón ' + modelo.aula : '' }}</span>
+              </div>
+              <button type="button" class="btn-confirmar" (click)="irAConfirmacion()">Ir a Confirmación →</button>
+            </div>
+          }
+
+          @if (estado === 'conflicto') {
+            <div class="alert alert-conflict" role="alert">
+              <div class="alert-title">
+                <strong>✖ Conflicto de horario o salón detectado</strong>
+                <span class="badge-err">CÓDIGO: ERR-400</span>
+              </div>
+              <p class="alert-msg">{{ mensaje }}</p>
+            </div>
+          }
+
+          @if (estado === 'error') {
+            <div class="alert alert-conflict" role="alert">
+              <p class="alert-msg">{{ mensaje }}</p>
+            </div>
+          }
+
+          <div class="actions">
+            <button type="button" class="btn-secondary" (click)="limpiar(f)">Limpiar Formulario</button>
+            <button type="submit" class="btn-primary" [disabled]="estado === 'enviando'">
+              {{ estado === 'enviando' ? 'Validando…' : 'Validar y Guardar' }}
+            </button>
+          </div>
+        </form>
+      </article>
+    </div>
+
+    <!-- Tabla semanal de disponibilidad de salones de Lunes a Domingo -->
+    <article class="card matrix-card">
+      <header class="card-head matrix-head">
+        <div>
+          <h3>Disponibilidad de Salones de Lunes a Domingo</h3>
+          <span class="card-sub">Consulta los salones disponibles (azul) y no disponibles / ocupados (rojo). Haz clic en un bloque libre para seleccionarlo.</span>
+        </div>
+
+        <div class="filter-box">
+          <label for="salonFiltro">Filtrar salón:</label>
+          <select id="salonFiltro" [(ngModel)]="salonFiltro" name="salonFiltro">
+            <option value="TODOS">Todos los salones principales (12 aulas)</option>
+            @for (s of salonesCatalogo; track s) {
+              <option [value]="s">Salón {{ s }}</option>
+            }
+          </select>
+          @if (!filtroEsGeneral) {
+            <button type="button" class="btn-ver-todos" (click)="verTodosLosSalones()">Ver Todos los Salones</button>
+          }
+        </div>
+      </header>
+
+      <div class="legend-bar">
+        <span><i class="dot free"></i> Disponible (clic para usar horario y salón)</span>
+        <span><i class="dot busy"></i> No disponible (ocupado por clase regular o recuperación)</span>
+      </div>
+
+      <div class="matrix-wrap">
+        <table class="salones-table">
+          <thead>
+            <tr>
+              <th>FRANJA HORARIA</th>
+              @for (d of diasSemana; track d.clave) {
+                <th [class.hoy]="d.clave === diaSeleccionado">{{ d.nombre.toUpperCase() }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (fr of franjas; track fr.etiqueta) {
+              <tr>
+                <td class="franja-col">{{ fr.etiqueta }}</td>
+                @for (d of diasSemana; track d.clave) {
+                  <td>
+                    @if (!filtroEsGeneral) {
+                      @if (ocupacionDeSalonEnCelda(salonFiltro, d.clave, fr); as oc) {
+                        <div class="slot slot-busy">
+                          <strong>✖ No disponible</strong>
+                          <span>{{ oc.docenteCodigo }} · {{ oc.curso }}</span>
+                        </div>
+                      } @else {
+                        <button type="button" class="slot slot-free" (click)="seleccionarBloqueDisponible(d.clave, fr, salonFiltro)">
+                          <strong>✔ Disponible</strong>
+                          <span>Usar {{ salonFiltro }}</span>
+                        </button>
+                      }
+                    } @else {
+                      <div class="slot-summary">
+                        @if (salonesPrincipalesDisponibles(d.clave, fr); as disp) {
+                          @if (disp.length) {
+                            <button type="button" class="free-count-btn" (click)="seleccionarBloqueDisponible(d.clave, fr, disp[0])">
+                              ✔ {{ disp.length }} disponibles
+                              <span class="free-list">{{ disp.slice(0, 4).join(', ') }}@if (disp.length > 4) { … }</span>
+                            </button>
+                          } @else {
+                            <span class="busy-tag">Sin aulas principales libres</span>
+                          }
+                        }
+                        @if (ocupacionesEnCelda(d.clave, fr).length) {
+                          <div class="busy-items">
+                            @for (oc of ocupacionesEnCelda(d.clave, fr).slice(0, 3); track $index) {
+                              <span class="busy-tag">✖ {{ oc.aula }} ({{ oc.docenteCodigo }})</span>
+                            }
+                            @if (ocupacionesEnCelda(d.clave, fr).length > 3) {
+                              <span class="busy-more">+{{ ocupacionesEnCelda(d.clave, fr).length - 3 }} ocupados</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+  }
+</section>

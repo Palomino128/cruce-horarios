@@ -1,0 +1,222 @@
+<div class="gestion-wrapper">
+  <div class="section-header" *ngIf="seccion === 'todos'">
+    <div>
+      <span class="eyebrow">IDENTIFICACIÓN AUTOMÁTICA SOLO POR CÓDIGO</span>
+      <h2>Registro e Información por Código (Docentes, Estudiantes y Coordinación)</h2>
+    </div>
+    <span class="badge badge-info">Perfil activo: {{ rolActivo }}</span>
+  </div>
+
+  <div class="gestion-grid" [class.single-col]="seccion !== 'todos'" *ngIf="seccion !== 'coordinador'">
+    <!-- PANEL DOCENTES (SOLO CÓDIGO) -->
+    <section class="card panel-box" *ngIf="seccion === 'docente' || seccion === 'todos'">
+      <div class="box-head">
+        <h3>Registro / Identificación de Docente por Código</h3>
+        <span class="badge badge-solicitado">{{ docentes.length }} registrados</span>
+      </div>
+
+      <form [formGroup]="docenteForm" (ngSubmit)="identificarORegistrarDocente()" class="form-stack">
+        <div class="row-code">
+          <div class="field">
+            <label for="docCod">Código (ej. DOC-101, DOC-106 o COORD-01)</label>
+            <input id="docCod" type="text" maxlength="10" formControlName="codigo" placeholder="DOC-106" />
+          </div>
+          <button type="submit" class="btn btn-primary">Ingresar / Registrar con Código</button>
+        </div>
+        <small class="field-err" *ngIf="docenteForm.get('codigo')?.touched && docenteForm.get('codigo')?.invalid">
+          Use formato DOC-### o COORD-## (ej. DOC-106).
+        </small>
+        <p class="feedback" *ngIf="msgDocente">{{ msgDocente }}</p>
+      </form>
+
+      <!-- FICHA AUTOMÁTICA DEL DOCENTE -->
+      <div class="auto-card" *ngIf="docenteFicha">
+        <div class="auto-head">
+          <div>
+            <span class="auto-role">{{ docenteFicha.codigo.startsWith('COORD') ? 'COORDINADOR ACADÉMICO' : 'DOCENTE TITULAR' }}</span>
+            <h4>{{ docenteFicha.nombres }} {{ docenteFicha.apellidos }}</h4>
+          </div>
+          <span class="badge badge-confirmado">{{ docenteFicha.codigo }}</span>
+        </div>
+
+        <div class="auto-list" *ngIf="docenteHorarios.length > 0">
+          <strong>Cursos y Horarios Asignados:</strong>
+          <div class="auto-item" *ngFor="let h of docenteHorarios">
+            <span>{{ h.curso }}</span>
+            <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }}</span>
+          </div>
+        </div>
+
+        <div class="auto-list" *ngIf="docenteReprog.length > 0">
+          <strong>Reprogramaciones:</strong>
+          <div class="auto-item" *ngFor="let r of docenteReprog">
+            <span>{{ r.curso }} ({{ r.fecha }})</span>
+            <span class="badge" [class.badge-confirmado]="r.estado === 'CONFIRMADO'" [class.badge-solicitado]="r.estado !== 'CONFIRMADO'">
+              {{ etiquetaEstado(r.estado) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <form [formGroup]="horarioForm" (ngSubmit)="registrarHorario()" class="form-stack">
+        <h4>Asignar Horario Adicional</h4>
+        <div class="row-2">
+          <div class="field">
+            <label for="horDoc">Docente</label>
+            <select id="horDoc" formControlName="docenteCodigo">
+              <option *ngFor="let d of docentes" [value]="d.codigo">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="horAula">Aula (A-J + ###)</label>
+            <input id="horAula" type="text" maxlength="4" formControlName="aula" placeholder="A101" />
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="horCurso">Curso</label>
+            <input id="horCurso" type="text" formControlName="curso" placeholder="Nombre del curso" />
+          </div>
+          <div class="field">
+            <label for="horDia">Día</label>
+            <select id="horDia" formControlName="dia">
+              <option *ngFor="let d of dias" [value]="d.key">{{ d.label }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="horIni">Hora Inicio</label>
+            <input id="horIni" type="time" formControlName="horaInicio" />
+          </div>
+          <div class="field">
+            <label for="horFin">Hora Fin</label>
+            <input id="horFin" type="time" formControlName="horaFin" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-secondary">Agregar Horario</button>
+        <p class="feedback" *ngIf="msgHorario">{{ msgHorario }}</p>
+      </form>
+    </section>
+
+    <!-- PANEL ESTUDIANTES (SOLO CÓDIGO) -->
+    <section class="card panel-box" *ngIf="seccion === 'estudiante' || seccion === 'todos'">
+      <div class="box-head">
+        <h3>Registro / Identificación de Estudiante por Código</h3>
+        <span class="badge badge-solicitado">{{ estudiantes.length }} estudiantes</span>
+      </div>
+
+      <form [formGroup]="estudianteForm" (ngSubmit)="identificarORegistrarEstudiante()" class="form-stack">
+        <div class="row-code">
+          <div class="field">
+            <label for="estCod">Código (U + números, ej. U23231304 o U23200105)</label>
+            <input id="estCod" type="text" maxlength="9" formControlName="codigo" placeholder="U23200105" />
+          </div>
+          <button type="submit" class="btn btn-primary">Ingresar / Registrar con Código</button>
+        </div>
+        <small class="field-err" *ngIf="estudianteForm.get('codigo')?.touched && estudianteForm.get('codigo')?.invalid">
+          Use formato U seguido de hasta 8 dígitos (ej. U23231304).
+        </small>
+        <p class="feedback" *ngIf="msgEstudiante">{{ msgEstudiante }}</p>
+      </form>
+
+      <!-- FICHA AUTOMÁTICA DEL ESTUDIANTE -->
+      <div class="auto-card" *ngIf="estudianteFicha">
+        <div class="auto-head">
+          <div>
+            <span class="auto-role">ESTUDIANTE MATRICULADO</span>
+            <h4>{{ estudianteFicha.nombres }} {{ estudianteFicha.apellidos }}</h4>
+          </div>
+          <span class="badge badge-confirmado">{{ estudianteFicha.codigo }}</span>
+        </div>
+        <div class="auto-list" *ngIf="estudianteHorarios.length > 0">
+          <strong>Cursos y Horarios Matriculados:</strong>
+          <div class="auto-item" *ngFor="let h of estudianteHorarios">
+            <span>{{ h.curso }}</span>
+            <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <form [formGroup]="matriculaForm" (ngSubmit)="registrarMatricula()" class="form-stack">
+        <h4>Matricular en Curso Adicional</h4>
+        <div class="row-2">
+          <div class="field">
+            <label for="matEst">Estudiante</label>
+            <select id="matEst" formControlName="estudianteCodigo">
+              <option *ngFor="let e of estudiantes" [value]="e.codigo">{{ e.codigo }} — {{ e.nombres }} {{ e.apellidos }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="matCurso">Curso</label>
+            <input id="matCurso" type="text" formControlName="curso" placeholder="Ej. Desarrollo Web Integrado" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-secondary">Registrar Matrícula</button>
+        <p class="feedback" *ngIf="msgMatricula">{{ msgMatricula }}</p>
+      </form>
+    </section>
+  </div>
+
+  <!-- PANEL DEL COORDINADOR (IDENTIFICACIÓN POR CÓDIGO + CONFIRMACIÓN) -->
+  <section class="card panel-box" *ngIf="seccion === 'coordinador' || seccion === 'todos'">
+    <div class="box-head">
+      <h3>Panel del Coordinador Académico — Identificación por Código y Confirmación</h3>
+      <button type="button" class="btn btn-secondary" (click)="cargarTodo()">Actualizar</button>
+    </div>
+
+    <form [formGroup]="coordinadorForm" (ngSubmit)="identificarORegistrarCoordinador()" class="form-stack coord-form">
+      <div class="row-code">
+        <div class="field">
+          <label for="coordCod">Código de Coordinador (ej. COORD-01)</label>
+          <input id="coordCod" type="text" maxlength="10" formControlName="codigo" placeholder="COORD-01" />
+        </div>
+        <button type="submit" class="btn btn-primary">Ingresar con Código de Coordinador</button>
+      </div>
+    </form>
+
+    <div class="auto-card" *ngIf="coordinadorFicha">
+      <div class="auto-head">
+        <div>
+          <span class="auto-role">COORDINADOR ACADÉMICO ACTIVO</span>
+          <h4>{{ coordinadorFicha.nombres }} {{ coordinadorFicha.apellidos }}</h4>
+        </div>
+        <span class="badge badge-confirmado">{{ coordinadorFicha.codigo }}</span>
+      </div>
+    </div>
+
+    <p class="feedback" *ngIf="msgCoordinador">{{ msgCoordinador }}</p>
+
+    <div class="coord-list" *ngIf="reprogramaciones.length > 0; else sinReprog">
+      <div class="coord-item" *ngFor="let r of reprogramaciones">
+        <div>
+          <strong>{{ r.curso }} ({{ r.docenteCodigo }})</strong>
+          <span>Fecha: {{ r.fecha }} | {{ r.horaInicio.slice(0,5) }} - {{ r.horaFin.slice(0,5) }} | Aula: {{ r.aula || 'Por asignar' }}</span>
+        </div>
+        <div class="coord-actions">
+          <span
+            class="badge"
+            [class.badge-confirmado]="r.estado === 'CONFIRMADO'"
+            [class.badge-solicitado]="r.estado !== 'CONFIRMADO'">
+            {{ etiquetaEstado(r.estado) }}
+          </span>
+          <button
+            *ngIf="r.estado !== 'CONFIRMADO'"
+            type="button"
+            class="btn btn-danger"
+            (click)="confirmarSolicitud(r)">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #sinReprog>
+      <p class="empty-msg">No hay solicitudes registradas todavía.</p>
+    </ng-template>
+  </section>
+</div>

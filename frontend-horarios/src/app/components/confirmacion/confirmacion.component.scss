@@ -1,0 +1,287 @@
+$negro: #111827;
+$negro-suave: #374151;
+$rojo: #c8102e;
+$rojo-hover: #a50d26;
+$azul: #1e3a8a;
+$azul-bg: #eff6ff;
+$plomo-fondo: #f3f4f6;
+$plomo-borde: #e5e7eb;
+$plomo-texto: #4b5563;
+$blanco: #ffffff;
+
+.confirmacion {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 860px;
+  background: $blanco;
+  border: 1px solid $plomo-borde;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba($negro, 0.12);
+  overflow: hidden;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.15rem 1.5rem;
+  background: $negro;
+  border-bottom: 4px solid $rojo;
+  color: $blanco;
+
+  .kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #93c5fd;
+    font-weight: 700;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  .badge-estado {
+    background: $azul;
+    color: $blanco;
+    border: 1px solid rgba($blanco, 0.3);
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+}
+
+.history-bar {
+  padding: 0.85rem 1.5rem;
+  background: $plomo-fondo;
+  border-bottom: 1px solid $plomo-borde;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  .history-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: $negro;
+  }
+
+  .history-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .history-chip {
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    background: $blanco;
+    color: $negro;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &.active,
+    &:hover {
+      background: $azul;
+      border-color: $azul;
+      color: $blanco;
+    }
+  }
+}
+
+.banner-ok {
+  margin: 1.25rem 1.5rem 0;
+  padding: 1rem 1.2rem;
+  background: $azul-bg;
+  border: 1px solid #93c5fd;
+  border-left: 5px solid $azul;
+  border-radius: 8px;
+  color: $azul;
+
+  strong {
+    font-size: 1.05rem;
+  }
+
+  .detalle {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    color: $negro;
+
+    .sep {
+      color: $plomo-texto;
+    }
+  }
+}
+
+.matriz {
+  padding: 1.25rem 1.5rem 0;
+
+  h3 {
+    color: $negro;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .leyenda {
+    display: flex;
+    gap: 1.1rem;
+    font-size: 0.8rem;
+    color: $plomo-texto;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 3px;
+    font-size: 0.8rem;
+
+    th {
+      background: $negro;
+      color: $blanco;
+      padding: 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+
+      &.hoy {
+        background: $rojo;
+        color: $blanco;
+      }
+    }
+
+    .hora {
+      color: $plomo-texto;
+      font-weight: 700;
+      white-space: nowrap;
+      padding-right: 0.4rem;
+    }
+
+    .celda {
+      height: 22px;
+      border-radius: 4px;
+    }
+  }
+}
+
+%estado-libre {
+  background: $plomo-fondo;
+}
+
+%estado-ocupado {
+  background: $negro-suave;
+}
+
+%estado-nuevo {
+  background: $azul;
+}
+
+.celda.libre,
+.dot.libre {
+  @extend %estado-libre;
+}
+
+.celda.ocupado,
+.dot.ocupado {
+  @extend %estado-ocupado;
+}
+
+.celda.nuevo,
+.dot.nuevo {
+  @extend %estado-nuevo;
+}
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid #cbd5e1;
+}
+
+.vacio {
+  padding: 2rem 1.5rem 0.75rem;
+  text-align: center;
+  color: $plomo-texto;
+
+  .link {
+    display: inline-block;
+    margin-top: 0.65rem;
+    color: $rojo;
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.card-foot {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1.35rem 1.5rem 1.6rem;
+}
+
+%btn-foot {
+  padding: 0.65rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  @extend %btn-foot;
+  background: $rojo;
+  color: $blanco;
+
+  &:hover {
+    background: $rojo-hover;
+  }
+}
+
+.btn-azul {
+  @extend %btn-foot;
+  background: $azul;
+  color: $blanco;
+
+  &:hover {
+    background: $negro;
+  }
+}
+
+.btn-secondary {
+  @extend %btn-foot;
+  background: $blanco;
+  color: $negro;
+  border-color: $negro;
+
+  &:hover {
+    background: $plomo-fondo;
+  }
+}

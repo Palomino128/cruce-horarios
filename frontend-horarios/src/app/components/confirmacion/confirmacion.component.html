@@ -1,0 +1,94 @@
+<section class="confirmacion">
+  <article class="card">
+    <header class="card-head">
+      <div>
+        <span class="kicker">Constancia Oficial de Reprogramación</span>
+        <h2>Solicitud N.º {{ numeroSolicitud }}</h2>
+      </div>
+      <span class="badge-estado">Estado: Procesado</span>
+    </header>
+
+    @if (reprogramaciones.length > 1) {
+      <div class="history-bar">
+        <span class="history-label">Reprogramaciones registradas ({{ reprogramaciones.length }}):</span>
+        <div class="history-chips">
+          @for (item of reprogramaciones; track $index) {
+            <button
+              type="button"
+              class="history-chip"
+              [class.active]="reprogramacion?.id === item.id && reprogramacion?.fecha === item.fecha && reprogramacion?.horaInicio === item.horaInicio"
+              (click)="seleccionarReprogramacion(item)">
+              {{ item.docenteCodigo }} · {{ item.curso }} ({{ item.fecha }})
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (reprogramacion) {
+      <div class="banner-ok">
+        <strong>✔ Reprogramación registrada sin cruces</strong>
+        <p class="detalle">
+          <span><b>Docente:</b> {{ reprogramacion.docenteCodigo }}{{ docente ? ' — ' + docente.nombres + ' ' + docente.apellidos : '' }}</span>
+          <span class="sep">|</span>
+          <span><b>Curso:</b> {{ reprogramacion.curso }}</span>
+          <span class="sep">|</span>
+          <span><b>Nueva fecha y horario:</b> {{ fechaFormateada }} · {{ hora(reprogramacion.horaInicio) }} – {{ hora(reprogramacion.horaFin) }}</span>
+          @if (reprogramacion.aula) {
+            <span class="sep">|</span>
+            <span><b>Salón:</b> {{ reprogramacion.aula }}</span>
+          }
+        </p>
+      </div>
+
+      <div class="matriz">
+        <h3>Matriz de Ocupabilidad Horaria</h3>
+        <div class="leyenda">
+          <span><i class="dot libre"></i> Libre</span>
+          <span><i class="dot ocupado"></i> Clase regular</span>
+          <span><i class="dot nuevo"></i> Reprogramación</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hora</th>
+                @for (d of dias; track d.clave) {
+                  <th [class.hoy]="d.clave === diaReprogramacion">{{ d.corto }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of horas; track h) {
+                <tr>
+                  <td class="hora">{{ etiquetaHora(h) }}</td>
+                  @for (d of dias; track d.clave) {
+                    <td [class]="'celda ' + estadoCelda(d.clave, h)"></td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    } @else {
+      <div class="vacio">
+        <p>Aún no hay una reprogramación registrada en esta sesión.</p>
+        @if (puedeCrearNueva) {
+          <a routerLink="/registro-reprogramacion" class="link">Registrar una reprogramación →</a>
+        }
+      </div>
+    }
+
+    <footer class="card-foot">
+      @if (reprogramacion) {
+        <button type="button" class="btn-secondary" (click)="imprimir()">Imprimir Constancia</button>
+      }
+      @if (puedeCrearNueva) {
+        <button type="button" class="btn-azul" (click)="nuevaReprogramacion()">Nueva Reprogramación</button>
+      }
+      <button type="button" class="btn-primary" (click)="aceptar()">Volver a Horarios</button>
+    </footer>
+  </article>
+</section>
