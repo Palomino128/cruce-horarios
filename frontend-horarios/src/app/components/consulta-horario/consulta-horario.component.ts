@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { HorarioService } from '../../services/horario.service';
@@ -13,11 +13,26 @@ import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
 
 export type TipoConsulta = 'docente' | 'estudiante';
+type ModoVisualizacion = 'tabla' | 'calendario';
 
 interface Persona {
   codigo: string;
   nombres: string;
   apellidos: string;
+}
+
+interface BloqueAcademico {
+  inicio: string;
+  fin: string;
+  etiqueta: string;
+}
+
+interface EventoCalendario {
+  tipo: 'regular' | 'recuperacion';
+  curso: string;
+  aula: string;
+  docenteCodigo: string;
+  detalle: string;
 }
 
 const DIAS_ES: Record<string, string> = {
@@ -30,21 +45,38 @@ const DIAS_ES: Record<string, string> = {
   SUNDAY: 'Domingo'
 };
 
+const DIAS_JS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 const ORDEN_DIAS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+
+const BLOQUES_ACADEMICOS: BloqueAcademico[] = [
+  { inicio: '07:00', fin: '08:30', etiqueta: '07:00 – 08:30' },
+  { inicio: '08:45', fin: '10:15', etiqueta: '08:45 – 10:15' },
+  { inicio: '10:30', fin: '12:00', etiqueta: '10:30 – 12:00' },
+  { inicio: '12:15', fin: '13:45', etiqueta: '12:15 – 13:45' },
+  { inicio: '14:00', fin: '15:30', etiqueta: '14:00 – 15:30' },
+  { inicio: '15:45', fin: '17:15', etiqueta: '15:45 – 17:15' },
+  { inicio: '17:30', fin: '19:00', etiqueta: '17:30 – 19:00' },
+  { inicio: '19:15', fin: '20:45', etiqueta: '19:15 – 20:45' },
+  { inicio: '21:00', fin: '22:30', etiqueta: '21:00 – 22:30' }
+];
 
 @Component({
   selector: 'app-consulta-horario',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, RouterLink],
+  imports: [FormsModule],
   templateUrl: './consulta-horario.component.html',
   styleUrl: './consulta-horario.component.scss'
 })
 export class ConsultaHorarioComponent implements OnInit {
-  /** Permite fijar el tipo de consulta cuando el componente se incrusta en un portal. */
   @Input() modoFijo?: TipoConsulta;
+
+  readonly bloquesAcademicos = BLOQUES_ACADEMICOS;
+  readonly diasCalendario = ORDEN_DIAS.map(clave => ({ clave, nombre: DIAS_ES[clave] }));
 
   tipo: TipoConsulta = 'docente';
   codigo = 'DOC-101';
+  modoVista: ModoVisualizacion = 'tabla';
+  mostrarSugerencias = false;
 
   esVistaPropia = false;
   soloEstudiante = false;
@@ -58,6 +90,12 @@ export class ConsultaHorarioComponent implements OnInit {
   horarios: Horario[] = [];
   reprogramaciones: Reprogramacion[] = [];
 
+  paginaHorarios = 1;
+  tamPaginaHorarios = 5;
+
+  paginaReprog = 1;
+  tamPaginaReprog = 5;
+
   cargando = false;
   buscado = false;
   error = '';
@@ -68,6 +106,7 @@ export class ConsultaHorarioComponent implements OnInit {
     private estudianteService: EstudianteService,
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -75,6 +114,7 @@ export class ConsultaHorarioComponent implements OnInit {
     const modoRuta = this.route.snapshot.data['modo'] as TipoConsulta | undefined;
     const modo = this.modoFijo ?? modoRuta;
     const sesion = this.horarioService.getSesionActiva();
+    const consultaPrevia = this.horarioService.getEstadoConsulta();
 
     if (!modo && !sesion) {
       this.router.navigate(['/login']);
@@ -82,7 +122,11 @@ export class ConsultaHorarioComponent implements OnInit {
     }
 
     if (modo) {
-      this.cambiarTipo(modo);
+      this.tipo = modo;
+      this.codigo = consultaPrevia && consultaPrevia.tipo === modo
+        ? consultaPrevia.codigo
+        : (modo === 'docente' ? 'DOC-101' : 'U23231304');
+      this.buscar();
     } else if (sesion) {
       if (sesion.rol === 'Estudiante') {
         this.esVistaPropia = true;
@@ -98,8 +142,8 @@ export class ConsultaHorarioComponent implements OnInit {
         this.buscar();
       } else {
         this.esVistaPropia = false;
-        this.tipo = 'docente';
-        this.codigo = 'DOC-101';
+        this.tipo = consultaPrevia?.tipo ?? 'docente';
+        this.codigo = consultaPrevia?.codigo ?? 'DOC-101';
         this.buscar();
       }
     }
@@ -108,7 +152,23 @@ export class ConsultaHorarioComponent implements OnInit {
   }
 
   get placeholder(): string {
-    return this.tipo === 'docente' ? 'Ej. DOC-101' : 'Ej. U23231304 o U24000001';
+    return this.tipo === 'docente' ? 'Código o apellido (ej. DOC-101)' : 'Código o apellido (ej. U23231304)';
+  }
+
+  get sugerenciasBusqueda(): Persona[] {
+    const q = (this.codigo || '').trim().toLowerCase();
+    const lista: Persona[] = this.tipo === 'docente' ? this.docentesCatalogo : this.estudiantesCatalogo;
+    if (!q) {
+      return lista.slice(0, 10);
+    }
+    const res: Persona[] = [];
+    for (const p of lista) {
+      if (`${p.codigo} ${p.nombres} ${p.apellidos}`.toLowerCase().includes(q)) {
+        res.push(p);
+        if (res.length >= 12) break;
+      }
+    }
+    return res;
   }
 
   get cargaSemanalHoras(): number {
@@ -117,6 +177,14 @@ export class ConsultaHorarioComponent implements OnInit {
       0
     );
     return Math.round((minutos / 60) * 10) / 10;
+  }
+
+  get horasAcademicasSemanales(): number {
+    const minutos = this.horarios.reduce(
+      (acc, h) => acc + Math.max(0, this.aMinutos(h.horaFin) - this.aMinutos(h.horaInicio)),
+      0
+    );
+    return Math.round(minutos / 45);
   }
 
   get diasConClase(): number {
@@ -131,7 +199,7 @@ export class ConsultaHorarioComponent implements OnInit {
       }
     }
     for (const r of this.reprogramaciones) {
-      if (r.aula?.trim()) {
+      if (r.estado !== 'RECHAZADO' && r.aula?.trim()) {
         unicos.add(r.aula.trim().toUpperCase());
       }
     }
@@ -140,6 +208,76 @@ export class ConsultaHorarioComponent implements OnInit {
 
   get salonesResumen(): string {
     return this.salonesAsignados.length ? this.salonesAsignados.join(', ') : 'Sin asignar';
+  }
+
+  get totalPaginasHorarios(): number {
+    return Math.max(1, Math.ceil(this.horarios.length / this.tamPaginaHorarios));
+  }
+
+  get horariosPaginados(): Horario[] {
+    const ini = (this.paginaHorarios - 1) * this.tamPaginaHorarios;
+    return this.horarios.slice(ini, ini + this.tamPaginaHorarios);
+  }
+
+  cambiarPaginaHorarios(delta: number): void {
+    const next = this.paginaHorarios + delta;
+    if (next >= 1 && next <= this.totalPaginasHorarios) {
+      this.paginaHorarios = next;
+    }
+  }
+
+  get totalPaginasReprog(): number {
+    return Math.max(1, Math.ceil(this.reprogramaciones.length / this.tamPaginaReprog));
+  }
+
+  get reprogramacionesPaginadas(): Reprogramacion[] {
+    const ini = (this.paginaReprog - 1) * this.tamPaginaReprog;
+    return this.reprogramaciones.slice(ini, ini + this.tamPaginaReprog);
+  }
+
+  cambiarPaginaReprog(delta: number): void {
+    const next = this.paginaReprog + delta;
+    if (next >= 1 && next <= this.totalPaginasReprog) {
+      this.paginaReprog = next;
+    }
+  }
+
+  get puedeContinuarAReprogramacion(): boolean {
+    return !this.soloEstudiante && !this.cargando && this.persona !== null;
+  }
+
+  eventosEnCelda(diaClave: string, bloque: BloqueAcademico): EventoCalendario[] {
+    const iniB = this.aMinutos(bloque.inicio);
+    const finB = this.aMinutos(bloque.fin);
+    const eventos: EventoCalendario[] = [];
+
+    for (const h of this.horarios) {
+      if (h.dia === diaClave && this.solapan(h.horaInicio, h.horaFin, iniB, finB)) {
+        eventos.push({
+          tipo: 'regular',
+          curso: h.curso,
+          aula: h.aula || 'Por asignar',
+          docenteCodigo: h.docenteCodigo,
+          detalle: `${this.hora(h.horaInicio)}–${this.hora(h.horaFin)}`
+        });
+      }
+    }
+
+    for (const r of this.reprogramaciones) {
+      if (r.estado === 'RECHAZADO') continue;
+      const diaR = this.diaDeFecha(r.fecha);
+      if (diaR === diaClave && this.solapan(r.horaInicio, r.horaFin, iniB, finB)) {
+        eventos.push({
+          tipo: 'recuperacion',
+          curso: r.curso,
+          aula: r.aula || 'Por asignar',
+          docenteCodigo: r.docenteCodigo,
+          detalle: `Recup. ${this.fechaEs(r.fecha)}`
+        });
+      }
+    }
+
+    return eventos;
   }
 
   cambiarTipo(tipo: TipoConsulta): void {
@@ -151,21 +289,31 @@ export class ConsultaHorarioComponent implements OnInit {
     }
     this.tipo = tipo;
     this.codigo = tipo === 'docente' ? 'DOC-101' : 'U23231304';
+    this.mostrarSugerencias = false;
     this.limpiarResultados();
+  }
+
+  seleccionarSugerencia(p: Persona): void {
+    this.codigo = p.codigo;
+    this.mostrarSugerencias = false;
+    this.buscar();
   }
 
   limpiarBusqueda(): void {
     this.codigo = '';
+    this.mostrarSugerencias = false;
     this.limpiarResultados();
   }
 
   buscar(): void {
     const codigo = this.codigo.trim().toUpperCase();
     if (!codigo) {
-      this.error = 'Ingrese un código para realizar la búsqueda.';
+      this.error = 'Ingrese un código institucional para realizar la búsqueda.';
       return;
     }
     this.codigo = codigo;
+    this.mostrarSugerencias = false;
+    this.horarioService.setEstadoConsulta({ tipo: this.tipo, codigo });
     this.limpiarResultados();
     this.cargando = true;
 
@@ -200,6 +348,8 @@ export class ConsultaHorarioComponent implements OnInit {
             this.aMinutos(a.horaInicio) - this.aMinutos(b.horaInicio)
         );
         this.reprogramaciones = reprogramaciones;
+        this.paginaHorarios = 1;
+        this.paginaReprog = 1;
         this.cdr.markForCheck();
       },
       error: () => {
@@ -217,6 +367,25 @@ export class ConsultaHorarioComponent implements OnInit {
       curso: h.curso
     });
     this.router.navigate(['/registro-reprogramacion']);
+  }
+
+  continuarAReprogramacion(): void {
+    if (this.tipo === 'docente' && this.persona) {
+      const primerCurso = this.horarios.length ? this.horarios[0].curso : '';
+      this.horarioService.setCursoPreseleccionado({
+        docenteCodigo: this.persona.codigo,
+        curso: primerCurso
+      });
+    }
+    this.router.navigate(['/registro-reprogramacion']);
+  }
+
+  regresar(): void {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
 
   cerrarSesion(): void {
@@ -242,6 +411,25 @@ export class ConsultaHorarioComponent implements OnInit {
     return y && m && d ? `${d}/${m}/${y}` : fecha;
   }
 
+  etiquetaEstadoReprog(estado?: string): string {
+    if (estado === 'CONFIRMADO') return 'Confirmado';
+    if (estado === 'RECHAZADO') return 'Rechazado';
+    return 'Solicitado';
+  }
+
+  private diaDeFecha(fecha?: string): string | null {
+    if (!fecha) return null;
+    const [y, m, d] = fecha.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return DIAS_JS[new Date(y, m - 1, d).getDay()];
+  }
+
+  private solapan(hi: string, hf: string, inicioMin: number, finMin: number): boolean {
+    const x = this.aMinutos(hi);
+    const y = this.aMinutos(hf);
+    return x < finMin && inicioMin < y;
+  }
+
   private cargarCatalogos(): void {
     forkJoin({
       docentes: this.docenteService.listar().pipe(catchError(() => of([] as Docente[]))),
@@ -264,6 +452,8 @@ export class ConsultaHorarioComponent implements OnInit {
     this.persona = null;
     this.horarios = [];
     this.reprogramaciones = [];
+    this.paginaHorarios = 1;
+    this.paginaReprog = 1;
     this.error = '';
     this.buscado = false;
   }

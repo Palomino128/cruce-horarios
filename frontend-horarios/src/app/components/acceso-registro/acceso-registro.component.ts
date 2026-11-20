@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { HorarioService, RolUsuario } from '../../services/horario.service';
@@ -14,9 +15,15 @@ type PasoPantalla = 'seleccion' | 'login';
 interface OpcionPerfil {
   rol: RolUsuario;
   titulo: string;
-  claseColor: 'azul' | 'negro' | 'rojo';
+  claseColor: 'celeste' | 'marino' | 'profundo';
   subtitulo: string;
   ejemplos: string[];
+}
+
+interface CuentaResumen {
+  codigo: string;
+  nombres: string;
+  apellidos: string;
 }
 
 @Component({
@@ -31,37 +38,41 @@ export class AccesoRegistroComponent implements OnInit {
     {
       rol: 'Estudiante',
       titulo: 'Estudiantes',
-      claseColor: 'azul',
-      subtitulo: '1,000 cuentas habilitadas · Consulta de horarios, cursos, salones y recuperaciones',
-      ejemplos: ['U23231304', 'U23261984', 'U23235344', 'U23200101', 'U24000001']
+      claseColor: 'celeste',
+      subtitulo: 'Consulta de horarios regulares, cursos, salones y clases de recuperación',
+      ejemplos: ['U23231304', 'U23261984', 'U23235344', 'U25000001', 'U25002000']
     },
     {
       rol: 'Docente',
       titulo: 'Docentes',
-      claseColor: 'negro',
-      subtitulo: '50 cuentas habilitadas · Horarios, cursos, salones y disponibilidad de lunes a domingo',
+      claseColor: 'marino',
+      subtitulo: 'Horarios, disponibilidad de salones Lun–Dom y solicitud de reprogramaciones',
       ejemplos: ['DOC-101', 'DOC-102', 'DOC-103', 'DOC-104', 'DOC-105']
     },
     {
       rol: 'Coordinador Académico',
       titulo: 'Coordinador',
-      claseColor: 'rojo',
-      subtitulo: '3 cuentas habilitadas · Supervisión general de horarios y reprogramaciones',
+      claseColor: 'profundo',
+      subtitulo: 'Supervisión general de horarios, confirmación y gestión de usuarios',
       ejemplos: ['COORD-01', 'COORD-02', 'COORD-03']
     }
   ];
 
   pasoPantalla: PasoPantalla = 'seleccion';
-  rolSeleccionado: RolUsuario = 'Estudiante';
+  rolSeleccionado: RolUsuario = 'Docente';
 
   codigo = '';
-  password = 'utp2026';
+  password = '';
   mostrarPassword = false;
+
+  busquedaCuenta = '';
+  mostrarSugerencias = false;
 
   docentesCatalogo: Docente[] = [];
   coordinadoresCatalogo: Docente[] = [];
   estudiantesCatalogo: Estudiante[] = [];
 
+  cargandoCatalogo = true;
   cargando = false;
   error = '';
 
@@ -74,7 +85,10 @@ export class AccesoRegistroComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.horarioService.cerrarSesion();
+    const preseleccion = this.horarioService.consumirRolPreseleccionadoLogin();
+    if (preseleccion) {
+      this.elegirPerfil(preseleccion);
+    }
 
     forkJoin({
       docentes: this.docenteService.listar().pipe(catchError(() => of([] as Docente[]))),
@@ -83,15 +97,20 @@ export class AccesoRegistroComponent implements OnInit {
       this.docentesCatalogo = docentes.filter(d => !d.codigo.toUpperCase().startsWith('COORD'));
       this.coordinadoresCatalogo = docentes.filter(d => d.codigo.toUpperCase().startsWith('COORD'));
       this.estudiantesCatalogo = estudiantes;
+      this.cargandoCatalogo = false;
       this.cdr.markForCheck();
     });
+  }
+
+  get formularioValido(): boolean {
+    return Boolean(this.codigo.trim() && this.password.trim()) && !this.cargando;
   }
 
   get perfilActivo(): OpcionPerfil {
     return this.perfiles.find(p => p.rol === this.rolSeleccionado) ?? this.perfiles[0];
   }
 
-  get cuentasDelPerfil(): Array<{ codigo: string; nombres: string; apellidos: string }> {
+  get cuentasDelPerfil(): CuentaResumen[] {
     if (this.rolSeleccionado === 'Estudiante') {
       return this.estudiantesCatalogo;
     }
@@ -101,9 +120,28 @@ export class AccesoRegistroComponent implements OnInit {
     return this.coordinadoresCatalogo;
   }
 
+  get sugerenciasFiltradas(): CuentaResumen[] {
+    const q = (this.busquedaCuenta || '').trim().toLowerCase();
+    const lista = this.cuentasDelPerfil;
+    if (!q) {
+      return lista.slice(0, 10);
+    }
+    const matches: CuentaResumen[] = [];
+    for (const c of lista) {
+      const full = `${c.codigo} ${c.nombres} ${c.apellidos}`.toLowerCase();
+      if (full.includes(q)) {
+        matches.push(c);
+        if (matches.length >= 12) {
+          break;
+        }
+      }
+    }
+    return matches;
+  }
+
   get placeholderCodigo(): string {
     if (this.rolSeleccionado === 'Estudiante') {
-      return 'Ej. U23231304 o U24000001';
+      return 'Ej. U23231304 o U25000001';
     }
     if (this.rolSeleccionado === 'Docente') {
       return 'Ej. DOC-101';
@@ -116,7 +154,9 @@ export class AccesoRegistroComponent implements OnInit {
     this.pasoPantalla = 'login';
     this.error = '';
     this.mostrarPassword = false;
-    this.password = 'utp2026';
+    this.password = '';
+    this.busquedaCuenta = '';
+    this.mostrarSugerencias = false;
     if (rol === 'Estudiante') {
       this.codigo = 'U23231304';
     } else if (rol === 'Docente') {
@@ -129,17 +169,39 @@ export class AccesoRegistroComponent implements OnInit {
   volverASeleccion(): void {
     this.pasoPantalla = 'seleccion';
     this.error = '';
+    this.password = '';
+    this.mostrarSugerencias = false;
+  }
+
+  seleccionarCuenta(c: CuentaResumen): void {
+    this.codigo = c.codigo;
+    this.busquedaCuenta = `${c.codigo} — ${c.nombres} ${c.apellidos}`;
+    this.mostrarSugerencias = false;
+    this.error = '';
+  }
+
+  onBuscarChange(valor: string): void {
+    this.busquedaCuenta = valor;
+    this.mostrarSugerencias = true;
+    const cod = valor.split('—')[0].trim().toUpperCase();
+    if (/^(DOC-\d+|COORD-\d+|U\d+)$/.test(cod)) {
+      this.codigo = cod;
+    }
+    this.error = '';
   }
 
   usarEjemplo(cod: string): void {
     this.codigo = cod;
-    this.password = this.password || 'utp2026';
+    this.busquedaCuenta = cod;
+    this.mostrarSugerencias = false;
     this.error = '';
   }
 
   limpiarFormulario(): void {
     this.codigo = '';
+    this.busquedaCuenta = '';
     this.password = '';
+    this.mostrarSugerencias = false;
     this.error = '';
   }
 
@@ -155,61 +217,28 @@ export class AccesoRegistroComponent implements OnInit {
       return;
     }
     if (!this.password || !this.password.trim()) {
-      this.error = 'Ingrese su contraseña para iniciar sesión.';
+      this.error = 'Ingrese su contraseña institucional para iniciar sesión.';
       return;
     }
     this.codigo = cod;
     this.cargando = true;
+    this.mostrarSugerencias = false;
 
-    if (this.rolSeleccionado === 'Estudiante') {
-      this.estudianteService.buscarPorCodigo(cod).subscribe({
-        next: est => {
-          this.cargando = false;
-          this.horarioService.setSesionActiva({
-            rol: 'Estudiante',
-            codigo: est.codigo,
-            nombres: est.nombres,
-            apellidos: est.apellidos
-          });
-          this.cdr.markForCheck();
-          this.router.navigate(['/consulta-horario']);
-        },
-        error: () => {
-          this.cargando = false;
-          this.error = `La cuenta de estudiante ${cod} no existe en el padrón registrado.`;
-          this.cdr.markForCheck();
-        }
-      });
-      return;
-    }
-
-    if (this.rolSeleccionado === 'Docente' && cod.startsWith('COORD')) {
-      this.cargando = false;
-      this.error = `El código ${cod} pertenece al perfil Coordinador. Cambie de perfil para ingresar.`;
-      return;
-    }
-
-    if (this.rolSeleccionado === 'Coordinador Académico' && !cod.startsWith('COORD')) {
-      this.cargando = false;
-      this.error = 'Para Coordinador Académico utilice una cuenta oficial registrada (COORD-01, COORD-02 o COORD-03).';
-      return;
-    }
-
-    this.docenteService.buscarPorCodigo(cod).subscribe({
-      next: persona => {
+    this.horarioService.login(this.rolSeleccionado, cod, this.password).subscribe({
+      next: sesion => {
         this.cargando = false;
-        this.horarioService.setSesionActiva({
-          rol: this.rolSeleccionado,
-          codigo: persona.codigo,
-          nombres: persona.nombres,
-          apellidos: persona.apellidos
-        });
+        this.horarioService.setSesionActiva(sesion);
         this.cdr.markForCheck();
         this.router.navigate(['/consulta-horario']);
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.cargando = false;
-        this.error = `La cuenta ${cod} no se encuentra registrada en el sistema.`;
+        const msg = err.error && typeof err.error === 'object' && err.error.mensaje
+          ? err.error.mensaje
+          : err.status === 0
+            ? 'No se pudo conectar con el servidor de autenticación (http://localhost:8082).'
+            : 'Credenciales inválidas para el perfil seleccionado.';
+        this.error = msg;
         this.cdr.markForCheck();
       }
     });

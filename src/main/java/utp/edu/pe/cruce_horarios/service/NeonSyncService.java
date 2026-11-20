@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import utp.edu.pe.cruce_horarios.model.Reprogramacion;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,6 +16,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -100,9 +104,16 @@ public class NeonSyncService {
                     hora_inicio VARCHAR(20) NOT NULL,
                     hora_fin VARCHAR(20) NOT NULL,
                     aula VARCHAR(50),
-                    estado VARCHAR(30) DEFAULT 'SOLICITADO'
+                    estado VARCHAR(30) DEFAULT 'SOLICITADO',
+                    motivo VARCHAR(250),
+                    observacion_coordinador VARCHAR(250),
+                    porcentaje_asistencia DOUBLE PRECISION
                 )
                 """, List.of());
+
+        ejecutar("ALTER TABLE reprogramaciones ADD COLUMN IF NOT EXISTS motivo VARCHAR(250)", List.of());
+        ejecutar("ALTER TABLE reprogramaciones ADD COLUMN IF NOT EXISTS observacion_coordinador VARCHAR(250)", List.of());
+        ejecutar("ALTER TABLE reprogramaciones ADD COLUMN IF NOT EXISTS porcentaje_asistencia DOUBLE PRECISION", List.of());
 
         log.info("Esquema online verificado en Neon PostgreSQL ({}).",
                 enmascararCredenciales(neonConnectionString));
@@ -113,6 +124,120 @@ public class NeonSyncService {
             return "********";
         }
         return cadenaConexion.replaceAll("(://[^:/@]+:)[^@]+(@)", "$1********$2");
+    }
+
+    public void sincronizarReprogramacionInsert(Reprogramacion r) {
+        if (!estaConfigurado() || r == null) {
+            return;
+        }
+        String pctStr = r.getPorcentajeAsistencia() == null ? "100.0" : String.valueOf(r.getPorcentajeAsistencia());
+        ejecutar("""
+                INSERT INTO reprogramaciones
+                    (docente_codigo, curso, fecha, hora_inicio, hora_fin, aula, estado, motivo, observacion_coordinador, porcentaje_asistencia)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CAST($10 AS DOUBLE PRECISION))
+                """,
+                List.of(
+                        valorSeguro(r.getDocenteCodigo()),
+                        valorSeguro(r.getCurso()),
+                        valorSeguro(r.getFecha()),
+                        horaTexto(r.getHoraInicio()),
+                        horaTexto(r.getHoraFin()),
+                        valorSeguro(r.getAula()),
+                        valorSeguro(r.getEstado() == null ? "SOLICITADO" : r.getEstado()),
+                        valorSeguro(r.getMotivo()),
+                        valorSeguro(r.getObservacionCoordinador()),
+                        pctStr
+                ));
+    }
+
+    public void sincronizarReprogramacionEstado(Reprogramacion r) {
+        if (!estaConfigurado() || r == null) {
+            return;
+        }
+        ejecutar("""
+                UPDATE reprogramaciones
+                   SET estado = $1,
+                       observacion_coordinador = $2
+                 WHERE docente_codigo = $3
+                   AND curso = $4
+                   AND fecha = $5
+                   AND hora_inicio = $6
+                   AND hora_fin = $7
+                """,
+                List.of(
+                        valorSeguro(r.getEstado()),
+                        valorSeguro(r.getObservacionCoordinador()),
+                        valorSeguro(r.getDocenteCodigo()),
+                        valorSeguro(r.getCurso()),
+                        valorSeguro(r.getFecha()),
+                        horaTexto(r.getHoraInicio()),
+                        horaTexto(r.getHoraFin())
+                ));
+    }
+
+    public void eliminarReprogramacionNeon(Reprogramacion r) {
+        if (!estaConfigurado() || r == null) {
+            return;
+        }
+        ejecutar("""
+                DELETE FROM reprogramaciones
+                 WHERE docente_codigo = $1
+                   AND curso = $2
+                   AND fecha = $3
+                   AND hora_inicio = $4
+                   AND hora_fin = $5
+                """,
+                List.of(
+                        valorSeguro(r.getDocenteCodigo()),
+                        valorSeguro(r.getCurso()),
+                        valorSeguro(r.getFecha()),
+                        horaTexto(r.getHoraInicio()),
+                        horaTexto(r.getHoraFin())
+                ));
+    }
+
+    public List<Reprogramacion> cargarReprogramacionesDesdeNeon() {
+        List<Reprogramacion> resultado = new ArrayList<>();
+        if (!estaConfigurado()) {
+            return resultado;
+        }
+        JsonNode rows = consultarFilas("""
+                SELECT docente_codigo, curso, fecha, hora_inicio, hora_fin, aula, estado, motivo, observacion_coordinador, porcentaje_asistencia
+                  FROM reprogramaciones
+                 ORDER BY id ASC
+                """, List.of());
+        if (!rows.isArray()) {
+            return resultado;
+        }
+        for (JsonNode row : rows) {
+            try {
+                Reprogramacion r = new Reprogramacion();
+                r.setDocenteCodigo(texto(row, "docente_codigo"));
+                r.setCurso(texto(row, "curso"));
+                r.setFecha(LocalDate.parse(texto(row, "fecha")));
+                r.setHoraInicio(LocalTime.parse(horaNormalizada(texto(row, "hora_inicio"))));
+                r.setHoraFin(LocalTime.parse(horaNormalizada(texto(row, "hora_fin"))));
+                String aula = texto(row, "aula");
+                r.setAula(aula.isBlank() ? null : aula);
+                String estado = texto(row, "estado");
+                r.setEstado(estado.isBlank() ? "SOLICITADO" : estado);
+                String motivo = texto(row, "motivo");
+                r.setMotivo(motivo.isBlank() ? null : motivo);
+                String obs = texto(row, "observacion_coordinador");
+                r.setObservacionCoordinador(obs.isBlank() ? null : obs);
+                JsonNode pctNode = row.path("porcentaje_asistencia");
+                if (!pctNode.isMissingNode() && !pctNode.isNull()) {
+                    String pctTxt = pctNode.asText("").trim();
+                    if (!pctTxt.isEmpty()) {
+                        r.setPorcentajeAsistencia(Double.parseDouble(pctTxt));
+                    }
+                }
+                resultado.add(r);
+            } catch (Exception ex) {
+                log.warn("No se pudo reconstruir una fila de reprogramaciones desde Neon: {}", ex.getMessage());
+            }
+        }
+        return resultado;
     }
 
     public JsonNode consultarFilas(String query, List<String> params) {
@@ -173,7 +298,22 @@ public class NeonSyncService {
         return nodo.isMissingNode() || nodo.isNull() ? "" : nodo.asText("");
     }
 
-    private boolean estaConfigurado() {
+    private String horaTexto(LocalTime hora) {
+        if (hora == null) {
+            return "";
+        }
+        String str = hora.toString();
+        return str.length() == 5 ? str + ":00" : str;
+    }
+
+    private String horaNormalizada(String hora) {
+        if (hora == null) {
+            return "00:00";
+        }
+        return hora.length() >= 5 ? hora.substring(0, 5) : hora;
+    }
+
+    public boolean estaConfigurado() {
         return syncEnabled
                 && neonHttpUrl != null && !neonHttpUrl.isBlank()
                 && neonConnectionString != null && !neonConnectionString.isBlank()

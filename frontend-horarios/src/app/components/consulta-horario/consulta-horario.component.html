@@ -2,6 +2,7 @@
   <div class="page-head">
     <div class="head-row">
       <div>
+        <span class="page-kicker">CONSULTA DE HORARIOS ACADÉMICOS · 07:00 AM – 10:30 PM</span>
         <h2>
           @if (soloEstudiante) {
             Mis Horarios, Salones y Clases de Recuperación
@@ -13,18 +14,24 @@
         </h2>
         <p>
           @if (soloEstudiante) {
-            Vista de estudiante: consulta únicamente tus cursos matriculados, tus salones asignados y tus clases de recuperación.
+            Vista de estudiante: consulta tus cursos matriculados, tus salones asignados y recuperaciones programadas.
           } @else if (esDocenteLogueado) {
-            Consulta tus cursos asignados, tus salones y accede a recuperar sesiones revisando disponibilidad de lunes a domingo.
+            Revisa tu carga académica semanal y selecciona un curso para programar su recuperación sin cruces.
           } @else {
-            Supervise la carga horaria regular, salones asignados y reprogramaciones de cualquiera de los 50 docentes o 1,000 estudiantes.
+            Supervisa la carga académica regular (bloques de 45 min), aulas asignadas y reprogramaciones por docente o estudiante.
           }
         </p>
       </div>
-      @if (!esVistaPropia && (docentesCatalogo.length || estudiantesCatalogo.length)) {
-        <span class="catalog-pill">
-          {{ docentesCatalogo.length | number }} docentes · {{ estudiantesCatalogo.length | number }} estudiantes
-        </span>
+
+      @if (persona) {
+        <div class="view-toggle" role="tablist" aria-label="Modo de visualización">
+          <button type="button" class="toggle-btn" [class.active]="modoVista === 'tabla'" (click)="modoVista = 'tabla'">
+            Vista Tabla
+          </button>
+          <button type="button" class="toggle-btn" [class.active]="modoVista === 'calendario'" (click)="modoVista = 'calendario'">
+            Calendario Semanal (Lun–Dom)
+          </button>
+        </div>
       }
     </div>
   </div>
@@ -39,134 +46,134 @@
         </select>
       </div>
 
-      <div class="field grow">
-        <label for="codigo">Código Institucional</label>
+      <div class="field grow search-autocomplete">
+        <label for="codigo">Código o Nombre Institucional</label>
         <input
           id="codigo"
           name="codigo"
           type="text"
-          list="codigosCatalogo"
           [(ngModel)]="codigo"
+          (focus)="mostrarSugerencias = true"
+          (ngModelChange)="mostrarSugerencias = true"
           [placeholder]="placeholder"
           autocomplete="off" />
-        <datalist id="codigosCatalogo">
-          @if (tipo === 'docente') {
-            @for (d of docentesCatalogo; track d.codigo) {
-              <option [value]="d.codigo">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</option>
+
+        @if (mostrarSugerencias && sugerenciasBusqueda.length > 0) {
+          <div class="sug-dropdown">
+            @for (s of sugerenciasBusqueda; track s.codigo) {
+              <button type="button" class="sug-row" (click)="seleccionarSugerencia(s)">
+                <span class="badge badge-navy">{{ s.codigo }}</span>
+                <span>{{ s.nombres }} {{ s.apellidos }}</span>
+              </button>
             }
-          } @else {
-            @for (e of estudiantesCatalogo; track e.codigo) {
-              <option [value]="e.codigo">{{ e.codigo }} — {{ e.nombres }} {{ e.apellidos }}</option>
-            }
-          }
-        </datalist>
+            <div class="sug-foot">
+              <span>Mostrando {{ sugerenciasBusqueda.length }} coincidencia(s)</span>
+              <button type="button" (click)="mostrarSugerencias = false">Cerrar</button>
+            </div>
+          </div>
+        }
       </div>
 
       <div class="search-actions">
-        <button class="btn-secondary" type="button" (click)="limpiarBusqueda()">Limpiar</button>
-        <button class="btn-primary" type="submit" [disabled]="cargando">
-          {{ cargando ? 'Buscando…' : 'Buscar' }}
+        <button class="btn btn-secondary" type="button" (click)="limpiarBusqueda()">Limpiar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="cargando || !codigo.trim()">
+          {{ cargando ? 'Buscando…' : 'Buscar Horario' }}
         </button>
       </div>
     </form>
-  } @else if (soloEstudiante) {
-    <div class="card student-banner">
-      <div>
-        <span class="student-badge">ESTUDIANTE · SOLO CONSULTA</span>
-        <strong>{{ persona ? persona.codigo + ' · ' + persona.nombres + ' ' + persona.apellidos : 'Estudiante: ' + codigo }}</strong>
+  } @else {
+    <div class="card user-banner">
+      <div class="banner-left">
+        <span class="badge" [class.badge-info]="soloEstudiante" [class.badge-navy]="esDocenteLogueado">
+          {{ soloEstudiante ? 'ESTUDIANTE · SOLO CONSULTA' : 'DOCENTE TITULAR · CARGA PROPIA' }}
+        </span>
+        <strong>{{ persona ? persona.codigo + ' · ' + persona.nombres + ' ' + persona.apellidos : codigo }}</strong>
       </div>
-      <button type="button" class="btn-link" (click)="cerrarSesion()">Cerrar Sesión</button>
-    </div>
-  } @else if (esDocenteLogueado) {
-    <div class="card student-banner">
-      <div>
-        <span class="student-badge">DOCENTE TITULAR · CARGA PROPIA</span>
-        <strong>{{ persona ? persona.codigo + ' · ' + persona.nombres + ' ' + persona.apellidos : 'Docente: ' + codigo }}</strong>
-      </div>
-      <button type="button" class="btn-link" (click)="cerrarSesion()">Cerrar Sesión</button>
+      <button type="button" class="btn btn-secondary" (click)="buscar()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando…' : 'Actualizar Horario' }}
+      </button>
     </div>
   }
 
-  @if (esDocenteLogueado || (tipo === 'docente' && persona && !soloEstudiante)) {
-    <div class="docente-cta">
-      <span>¿Deseas recuperar o reprogramar una clase viendo los salones disponibles y no disponibles de lunes a domingo?</span>
-      <a routerLink="/registro-reprogramacion" class="btn-cta">
-        Recuperar Clase (Salones Lun–Dom) →
-      </a>
+  @if (cargando) {
+    <div class="card loading-state">
+      <span class="spinner"></span>
+      <span>Consultando horarios y reprogramaciones en el servidor…</span>
     </div>
   }
 
   @if (error) {
-    <div class="alert alert-error">{{ error }}</div>
+    <div class="toast-banner toast-danger" role="alert">
+      <div>
+        <strong>No se pudo completar la consulta</strong>
+        {{ error }}
+      </div>
+    </div>
   }
 
-  @if (persona) {
+  @if (persona && !cargando) {
     <div class="info-cards">
-      <article class="card info-card accent-negro">
+      <article class="card info-card accent-navy">
         <span class="info-label">{{ tipo === 'docente' ? 'DOCENTE TITULAR' : 'ESTUDIANTE' }}</span>
         <strong class="info-value">{{ persona.nombres }} {{ persona.apellidos }}</strong>
         <span class="info-sub">Código: {{ persona.codigo }}</span>
       </article>
 
-      <article class="card info-card accent-azul">
-        <span class="info-label">CARGA HORARIA SEMANAL</span>
-        <strong class="info-value">{{ cargaSemanalHoras }} h</strong>
-        <span class="info-sub">{{ horarios.length }} curso(s) · {{ diasConClase }} día(s) con clase</span>
+      <article class="card info-card accent-sky">
+        <span class="info-label">CARGA ACADÉMICA SEMANAL</span>
+        <strong class="info-value">{{ horasAcademicasSemanales }} h acad.</strong>
+        <span class="info-sub">{{ cargaSemanalHoras }} h cronológicas · {{ horarios.length }} curso(s) · {{ diasConClase }} día(s)</span>
       </article>
 
-      <article class="card info-card accent-azul">
+      <article class="card info-card accent-sky">
         <span class="info-label">SALONES ASIGNADOS</span>
         <strong class="info-value info-salones">{{ salonesResumen }}</strong>
         <span class="info-sub">{{ salonesAsignados.length }} salón(es)</span>
       </article>
 
-      <article class="card info-card accent-rojo">
+      <article class="card info-card accent-navy">
         <span class="info-label">CLASES DE RECUPERACIÓN</span>
         <strong class="info-value">{{ reprogramaciones.length }}</strong>
-        <span class="info-sub">Programadas sin cruces</span>
+        <span class="info-sub">Registradas en el sistema</span>
       </article>
     </div>
 
-    <article class="card table-card">
-      <header class="card-head">
-        <h3>Horario Regular de Cursos y Salones</h3>
-      </header>
+    @if (modoVista === 'calendario') {
+      <article class="card calendar-card">
+        <header class="card-head head-sky">
+          <div>
+            <h3>Calendario Semanal (Bloques Académicos de 45 min · 07:00 am – 10:30 pm)</h3>
+            <span class="card-sub">Azul marino: horario regular · Celeste: clase de recuperación</span>
+          </div>
+          <div class="cal-legend">
+            <span><i class="dot reg"></i> Regular</span>
+            <span><i class="dot rec"></i> Recuperación</span>
+          </div>
+        </header>
 
-      @if (horarios.length) {
         <div class="table-wrap">
-          <table>
+          <table class="cal-table">
             <thead>
               <tr>
-                <th>CURSO</th>
-                <th>DOCENTE (CÓDIGO)</th>
-                <th>DÍA</th>
-                <th>HORA INICIO</th>
-                <th>HORA FIN</th>
-                <th>SALÓN / AULA</th>
-                @if (!soloEstudiante) {
-                  <th>ACCIÓN</th>
+                <th>BLOQUE</th>
+                @for (d of diasCalendario; track d.clave) {
+                  <th>{{ d.nombre.toUpperCase() }}</th>
                 }
               </tr>
             </thead>
             <tbody>
-              @for (h of horarios; track $index) {
+              @for (b of bloquesAcademicos; track b.etiqueta) {
                 <tr>
-                  <td class="curso">{{ h.curso }}</td>
-                  <td>
-                    <div class="docente-cell">
-                      <span class="code-badge">{{ h.docenteCodigo }}</span>
-                      <span>{{ nombreDocente(h.docenteCodigo) }}</span>
-                    </div>
-                  </td>
-                  <td>{{ diaEs(h.dia) }}</td>
-                  <td>{{ hora(h.horaInicio) }}</td>
-                  <td>{{ hora(h.horaFin) }}</td>
-                  <td><span class="salon-badge">{{ h.aula || 'Por asignar' }}</span></td>
-                  @if (!soloEstudiante) {
+                  <td class="bloque-col">{{ b.etiqueta }}</td>
+                  @for (d of diasCalendario; track d.clave) {
                     <td>
-                      <button type="button" class="btn-row-action" (click)="irARecuperarCurso(h)">
-                        Recuperar clase →
-                      </button>
+                      @for (ev of eventosEnCelda(d.clave, b); track $index) {
+                        <div class="cal-event" [class.cal-rec]="ev.tipo === 'recuperacion'">
+                          <strong>{{ ev.curso }}</strong>
+                          <span>{{ ev.aula }} · {{ ev.docenteCodigo }}</span>
+                          <small>{{ ev.detalle }}</small>
+                        </div>
+                      }
                     </td>
                   }
                 </tr>
@@ -174,53 +181,185 @@
             </tbody>
           </table>
         </div>
-      } @else {
-        <p class="empty">No hay horarios regulares registrados para este código.</p>
-      }
-    </article>
+      </article>
+    } @else {
+      <article class="card table-card">
+        <header class="card-head">
+          <div>
+            <h3>Horario Regular de Cursos y Salones</h3>
+            <span class="card-sub">{{ horarios.length }} registro(s) encontrado(s)</span>
+          </div>
+          <div class="page-size-box">
+            <label for="tamHor">Filas:</label>
+            <select id="tamHor" [(ngModel)]="tamPaginaHorarios" (ngModelChange)="paginaHorarios = 1">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+            </select>
+          </div>
+        </header>
 
-    <article class="card table-card">
-      <header class="card-head head-azul">
-        <h3>Clases de Recuperación / Reprogramaciones Programadas</h3>
-      </header>
-
-      @if (reprogramaciones.length) {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>CURSO</th>
-                <th>DOCENTE (CÓDIGO)</th>
-                <th>FECHA DE RECUPERACIÓN</th>
-                <th>HORA INICIO</th>
-                <th>HORA FIN</th>
-                <th>SALÓN / AULA</th>
-                <th>ESTADO</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (r of reprogramaciones; track $index) {
+        @if (horarios.length) {
+          <div class="table-wrap">
+            <table>
+              <thead>
                 <tr>
-                  <td class="curso">{{ r.curso }}</td>
-                  <td>
-                    <div class="docente-cell">
-                      <span class="code-badge">{{ r.docenteCodigo }}</span>
-                      <span>{{ nombreDocente(r.docenteCodigo) }}</span>
-                    </div>
-                  </td>
-                  <td>{{ fechaEs(r.fecha) }}</td>
-                  <td>{{ hora(r.horaInicio) }}</td>
-                  <td>{{ hora(r.horaFin) }}</td>
-                  <td><span class="salon-badge">{{ r.aula || 'Por asignar' }}</span></td>
-                  <td><span class="badge-aprobado">Aprobado</span></td>
+                  <th>CURSO</th>
+                  <th>DOCENTE (CÓDIGO)</th>
+                  <th>DÍA</th>
+                  <th>HORA INICIO</th>
+                  <th>HORA FIN</th>
+                  <th>SALÓN / AULA</th>
+                  @if (!soloEstudiante) {
+                    <th>ACCIÓN</th>
+                  }
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="empty">No hay clases de recuperación registradas para los cursos consultados.</p>
-      }
-    </article>
+              </thead>
+              <tbody>
+                @for (h of horariosPaginados; track $index) {
+                  <tr>
+                    <td class="curso">{{ h.curso }}</td>
+                    <td>
+                      <div class="docente-cell">
+                        <span class="badge badge-navy">{{ h.docenteCodigo }}</span>
+                        <span>{{ nombreDocente(h.docenteCodigo) }}</span>
+                      </div>
+                    </td>
+                    <td>{{ diaEs(h.dia) }}</td>
+                    <td>{{ hora(h.horaInicio) }}</td>
+                    <td>{{ hora(h.horaFin) }}</td>
+                    <td><span class="badge badge-info">{{ h.aula || 'Por asignar' }}</span></td>
+                    @if (!soloEstudiante) {
+                      <td>
+                        <button type="button" class="btn-row-action" (click)="irARecuperarCurso(h)">
+                          Reprogramar →
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination-bar">
+            <span>Mostrando {{ horariosPaginados.length }} de {{ horarios.length }} horarios</span>
+            <div class="pagination-controls">
+              <button type="button" class="page-btn" [disabled]="paginaHorarios <= 1" (click)="cambiarPaginaHorarios(-1)">
+                ← Anterior
+              </button>
+              <span class="page-indicator">Página {{ paginaHorarios }} de {{ totalPaginasHorarios }}</span>
+              <button type="button" class="page-btn" [disabled]="paginaHorarios >= totalPaginasHorarios" (click)="cambiarPaginaHorarios(1)">
+                Siguiente →
+              </button>
+            </div>
+          </div>
+        } @else {
+          <p class="empty">No hay horarios regulares registrados para este código.</p>
+        }
+      </article>
+
+      <article class="card table-card">
+        <header class="card-head head-sky">
+          <div>
+            <h3>Clases de Recuperación / Reprogramaciones</h3>
+            <span class="card-sub">{{ reprogramaciones.length }} solicitud(es) registrada(s)</span>
+          </div>
+        </header>
+
+        @if (reprogramaciones.length) {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>CURSO</th>
+                  <th>DOCENTE</th>
+                  <th>FECHA</th>
+                  <th>HORARIO</th>
+                  <th>SALÓN</th>
+                  <th>ASISTENCIA</th>
+                  <th>ESTADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of reprogramacionesPaginadas; track $index) {
+                  <tr>
+                    <td class="curso">
+                      <div>{{ r.curso }}</div>
+                      @if (r.motivo) {
+                        <small class="motivo-sub">{{ r.motivo }}</small>
+                      }
+                    </td>
+                    <td>
+                      <div class="docente-cell">
+                        <span class="badge badge-navy">{{ r.docenteCodigo }}</span>
+                        <span>{{ nombreDocente(r.docenteCodigo) }}</span>
+                      </div>
+                    </td>
+                    <td>{{ fechaEs(r.fecha) }}</td>
+                    <td>{{ hora(r.horaInicio) }} – {{ hora(r.horaFin) }}</td>
+                    <td><span class="badge badge-info">{{ r.aula || 'Por asignar' }}</span></td>
+                    <td>
+                      @if (r.porcentajeAsistencia !== undefined && r.porcentajeAsistencia !== null) {
+                        <span class="badge" [class.badge-success]="r.porcentajeAsistencia > 50" [class.badge-warning]="r.porcentajeAsistencia <= 50">
+                          {{ r.porcentajeAsistencia }}%
+                        </span>
+                      } @else {
+                        <span>—</span>
+                      }
+                    </td>
+                    <td>
+                      <span
+                        class="badge"
+                        [class.badge-success]="r.estado === 'CONFIRMADO'"
+                        [class.badge-danger]="r.estado === 'RECHAZADO'"
+                        [class.badge-solicitado]="r.estado !== 'CONFIRMADO' && r.estado !== 'RECHAZADO'">
+                        {{ etiquetaEstadoReprog(r.estado) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (totalPaginasReprog > 1) {
+            <div class="pagination-bar">
+              <span>Mostrando {{ reprogramacionesPaginadas.length }} de {{ reprogramaciones.length }} recuperaciones</span>
+              <div class="pagination-controls">
+                <button type="button" class="page-btn" [disabled]="paginaReprog <= 1" (click)="cambiarPaginaReprog(-1)">
+                  ← Anterior
+                </button>
+                <span class="page-indicator">Página {{ paginaReprog }} de {{ totalPaginasReprog }}</span>
+                <button type="button" class="page-btn" [disabled]="paginaReprog >= totalPaginasReprog" (click)="cambiarPaginaReprog(1)">
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+          }
+        } @else {
+          <p class="empty">No hay clases de recuperación registradas para los cursos consultados.</p>
+        }
+      </article>
+    }
   }
+
+  <div class="card nav-footer-card">
+    <div class="step-footer" style="margin-top: 0; padding-top: 0; border-top: none;">
+      <button type="button" class="btn btn-secondary" (click)="regresar()">← Regresar</button>
+      <div class="step-footer-right">
+        @if (!soloEstudiante) {
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="!puedeContinuarAReprogramacion"
+            (click)="continuarAReprogramacion()">
+            Continuar a Reprogramación →
+          </button>
+        } @else {
+          <button type="button" class="btn btn-secondary" (click)="cerrarSesion()">Finalizar Consulta</button>
+        }
+      </div>
+    </div>
+  </div>
 </section>

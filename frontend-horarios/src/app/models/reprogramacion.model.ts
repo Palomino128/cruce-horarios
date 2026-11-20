@@ -7,4 +7,7 @@ export interface Reprogramacion {
   horaFin: string;
   aula?: string;
   estado?: string;
+  motivo?: string;
+  observacionCoordinador?: string;
+  porcentajeAsistencia?: number;
 }

@@ -9,29 +9,79 @@ import {
   PortalEstudianteComponent
 } from './components/portales/portales.component';
 import { GestionUsuariosComponent } from './components/gestion-usuarios/gestion-usuarios.component';
+import { authGuard, roleGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  // Pantalla inicial de Login y registro por rol (Estudiante / Docente / Coordinador)
-  { path: 'login', component: AccesoRegistroComponent },
-  { path: 'registro', component: AccesoRegistroComponent },
+  // Pantalla inicial: Inicio de sesión con selección de rol (Estudiante / Docente / Coordinador)
+  { path: 'login', component: AccesoRegistroComponent, data: { breadcrumb: 'Inicio de Sesión', paso: 1 } },
+  { path: 'registro', component: AccesoRegistroComponent, data: { breadcrumb: 'Inicio de Sesión', paso: 1 } },
 
-  // Rutas principales
-  { path: 'consulta-horario', component: ConsultaHorarioComponent },
-  { path: 'registro-reprogramacion', component: RegistroReprogramacionComponent },
-  { path: 'confirmacion', component: ConfirmacionComponent },
+  // Consulta de horario (protegida)
+  {
+    path: 'consulta-horario',
+    component: ConsultaHorarioComponent,
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Consulta de Horario', paso: 2 }
+  },
 
-  // Rutas complementarias existentes (portales por rol y gestión)
-  { path: 'docente', component: PortalDocenteComponent },
-  { path: 'estudiante', component: PortalEstudianteComponent },
-  { path: 'coordinador', component: PortalCoordinadorComponent },
-  { path: 'gestion', component: GestionUsuariosComponent, data: { seccion: 'todos' } },
+  // Registro de reprogramación (Docente o Coordinador Académico)
+  {
+    path: 'registro-reprogramacion',
+    component: RegistroReprogramacionComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { breadcrumb: 'Registro de Reprogramación', paso: 3, roles: ['Docente', 'Coordinador Académico'] }
+  },
+
+  // Confirmación y constancia oficial (protegida)
+  {
+    path: 'confirmacion',
+    component: ConfirmacionComponent,
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Confirmación', paso: 4 }
+  },
+
+  // Rutas complementarias protegidas por rol
+  {
+    path: 'docente',
+    component: PortalDocenteComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { breadcrumb: 'Docente', roles: ['Docente', 'Coordinador Académico'] }
+  },
+  {
+    path: 'estudiante',
+    component: PortalEstudianteComponent,
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Estudiante' }
+  },
+  {
+    path: 'coordinador',
+    component: PortalCoordinadorComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { breadcrumb: 'Coordinador', roles: ['Coordinador Académico'] }
+  },
+  {
+    path: 'gestion',
+    component: GestionUsuariosComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { seccion: 'todos', breadcrumb: 'Gestión de Usuarios', roles: ['Coordinador Académico'] }
+  },
 
   // Compatibilidad con enlaces anteriores
   { path: 'reprogramacion', redirectTo: 'registro-reprogramacion', pathMatch: 'full' },
-  { path: 'consulta-docente', component: ConsultaHorarioComponent, data: { modo: 'docente' } },
-  { path: 'consulta-estudiante', component: ConsultaHorarioComponent, data: { modo: 'estudiante' } },
+  {
+    path: 'consulta-docente',
+    component: ConsultaHorarioComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { modo: 'docente', breadcrumb: 'Consulta Docente', paso: 2, roles: ['Docente', 'Coordinador Académico'] }
+  },
+  {
+    path: 'consulta-estudiante',
+    component: ConsultaHorarioComponent,
+    canActivate: [authGuard],
+    data: { modo: 'estudiante', breadcrumb: 'Consulta Estudiante', paso: 2 }
+  },
 
   { path: '**', redirectTo: 'login' }
 ];

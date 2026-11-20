@@ -1,30 +1,33 @@
-$negro: #111827;
-$negro-suave: #1f2937;
-$rojo: #c8102e;
-$rojo-hover: #a50d26;
-$azul: #1e3a8a;
-$azul-activo: #1d4ed8;
-$plomo-borde: #e5e7eb;
-$plomo-texto: #d1d5db;
-$blanco: #ffffff;
+$navy: #0b2545;
+$navy-mid: #13315c;
+$sky: #0284c7;
+$sky-bright: #38bdf8;
+$sky-soft: #e0f2fe;
+$white: #ffffff;
+$slate-text: #cbd5e1;
 
 .institucional-header {
-  background: $negro;
-  color: $blanco;
-  box-shadow: 0 3px 14px rgba($negro, 0.35);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: $navy;
+  color: $white;
+  box-shadow: 0 4px 18px rgba(11, 37, 69, 0.28);
 }
 
 .top-strip {
   height: 4px;
-  background: $rojo;
+  background: linear-gradient(90deg, $sky 0%, $sky-bright 55%, #7dd3fc 100%);
 }
 
 .header-top {
+  max-width: 1260px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.9rem 2rem;
+  padding: 0.75rem 1.5rem;
   flex-wrap: wrap;
 }
 
@@ -32,11 +35,11 @@ $blanco: #ffffff;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: $blanco;
+  color: $white;
   text-decoration: none;
 
   &.brand-link:hover .brand-title {
-    color: $plomo-borde;
+    color: $sky-bright;
   }
 
   .brand-icon {
@@ -44,28 +47,30 @@ $blanco: #ffffff;
     place-items: center;
     width: 40px;
     height: 40px;
-    border-radius: 8px;
-    background: $azul;
-    border: 1px solid rgba($blanco, 0.25);
-    color: $blanco;
+    border-radius: 10px;
+    background: linear-gradient(135deg, $sky 0%, $sky-bright 100%);
+    color: $white;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
   }
 
   .brand-title {
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     font-weight: 700;
-    letter-spacing: 0.2px;
-    line-height: 1.3;
+    letter-spacing: 0.15px;
+    line-height: 1.2;
     transition: color 0.15s;
+  }
 
-    .sep {
-      color: $rojo;
-      margin: 0 0.25rem;
-    }
-
-    .sub {
-      font-weight: 400;
-      color: $plomo-texto;
-    }
+  .brand-sub {
+    font-size: 0.74rem;
+    color: $slate-text;
+    font-weight: 500;
   }
 }
 
@@ -77,19 +82,20 @@ $blanco: #ffffff;
 
   .user-info {
     display: flex;
-    gap: 0.35rem;
-    font-size: 0.88rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
   }
 
   .user-name {
+    font-size: 0.85rem;
     font-weight: 700;
-    color: $blanco;
+    color: $white;
   }
 
   .user-role {
-    color: $plomo-texto;
+    font-size: 0.74rem;
+    color: $sky-bright;
     font-weight: 600;
   }
 
@@ -99,58 +105,19 @@ $blanco: #ffffff;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: $azul;
-    border: 2px solid $blanco;
-    color: $blanco;
+    background: $sky;
+    border: 2px solid rgba($white, 0.85);
+    color: $white;
     font-weight: 700;
     font-size: 0.82rem;
   }
 
   .btn-logout {
     padding: 0.42rem 0.9rem;
-    border-radius: 6px;
-    border: none;
-    background: $rojo;
-    color: $blanco;
-    font-size: 0.8rem;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background-color 0.15s;
-
-    &:hover {
-      background: $rojo-hover;
-    }
-  }
-
-  .access-pill {
-    padding: 0.38rem 0.95rem;
-    border-radius: 999px;
-    border: 1px solid rgba($blanco, 0.3);
-    background: $azul;
-    color: $blanco;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-  }
-}
-
-.nav-secondary {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0 2rem;
-  background: $azul;
-  border-top: 1px solid rgba($blanco, 0.12);
-  overflow-x: auto;
-
-  .btn-regresar {
-    margin-right: 0.6rem;
-    padding: 0.42rem 0.9rem;
-    border-radius: 6px;
-    border: 1px solid rgba($blanco, 0.45);
-    background: $negro;
-    color: $blanco;
+    border-radius: 8px;
+    border: 1px solid rgba($white, 0.28);
+    background: rgba($white, 0.1);
+    color: $white;
     font-size: 0.78rem;
     font-weight: 700;
     white-space: nowrap;
@@ -158,38 +125,145 @@ $blanco: #ffffff;
     transition: background-color 0.15s, border-color 0.15s;
 
     &:hover {
-      background: $rojo;
-      border-color: $rojo;
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+  }
+
+  .access-pill {
+    padding: 0.36rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba($sky-bright, 0.5);
+    background: rgba($sky, 0.22);
+    color: $sky-soft;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.25px;
+  }
+}
+
+.nav-secondary {
+  background: $navy-mid;
+  border-top: 1px solid rgba($white, 0.1);
+}
+
+.nav-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 1.5rem;
+  overflow-x: auto;
+
+  .btn-regresar {
+    margin-right: 0.65rem;
+    padding: 0.38rem 0.85rem;
+    border-radius: 7px;
+    border: 1px solid rgba($sky-bright, 0.55);
+    background: rgba($navy, 0.7);
+    color: $white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+
+    &:hover {
+      background: $sky;
+      border-color: $sky-bright;
     }
   }
 
   .nav-link {
-    padding: 0.78rem 1.15rem;
-    color: rgba($blanco, 0.82);
+    padding: 0.7rem 1.05rem;
+    color: rgba($white, 0.82);
     text-decoration: none;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.55px;
+    letter-spacing: 0.45px;
     border-bottom: 3px solid transparent;
     white-space: nowrap;
     transition: color 0.15s, background-color 0.15s, border-color 0.15s;
 
     &:hover {
-      color: $blanco;
-      background: $negro-suave;
+      color: $white;
+      background: rgba($sky, 0.18);
     }
 
     &.active {
-      color: $blanco;
-      background: $negro;
-      border-bottom-color: $rojo;
+      color: $white;
+      background: rgba($navy, 0.65);
+      border-bottom-color: $sky-bright;
     }
+  }
+}
+
+.breadcrumb-bar {
+  background: $white;
+  border-bottom: 1px solid #dbe4f0;
+  color: #475569;
+}
+
+.breadcrumb-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 0.48rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+}
+
+.breadcrumb-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  a {
+    color: $sky;
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+      color: $navy;
+    }
+  }
+
+  .crumb-sep {
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  &.active {
+    color: $navy;
+    font-weight: 700;
+  }
+}
+
+.crumb-role {
+  color: #475569;
+
+  strong {
+    color: $navy;
   }
 }
 
 @media (max-width: 720px) {
   .header-top,
-  .nav-secondary {
+  .nav-inner,
+  .breadcrumb-inner {
     padding-left: 1rem;
     padding-right: 1rem;
   }

@@ -12,6 +12,16 @@ export interface DisponibilidadPresencial {
   estudiantesConCruce: string[];
 }
 
+export interface OpcionRecuperacion {
+  fecha: string;
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+  aulaSugerida: string;
+  porcentajeAsistencia: number;
+  recomendada: boolean;
+}
+
 export interface ConfirmacionReprogramacion {
   solicitudNumero: string;
   estado: string;
@@ -42,12 +52,28 @@ export interface CursoPreseleccionado {
   curso: string;
 }
 
+export interface BorradorReprogramacion {
+  docenteCodigo: string;
+  curso: string;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  aula?: string;
+  motivo?: string;
+  salonFiltro?: string;
+}
+
+export interface EstadoConsultaGuardado {
+  tipo: 'docente' | 'estudiante';
+  codigo: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HorarioService {
   private static readonly STORAGE_KEY = 'sesion_horarios_utp';
   private readonly api = 'http://localhost:8082/api/horarios';
+  private readonly authApi = 'http://localhost:8082/api/auth';
 
-  /** Última reprogramación aprobada (HTTP 200), compartida con ConfirmacionComponent. */
   private readonly ultimaReprogramacionSubject = new BehaviorSubject<Reprogramacion | null>(null);
   readonly ultimaReprogramacion$ = this.ultimaReprogramacionSubject.asObservable();
 
@@ -63,6 +89,10 @@ export class HorarioService {
   private readonly cursoPreseleccionadoSubject = new BehaviorSubject<CursoPreseleccionado | null>(null);
   readonly cursoPreseleccionado$ = this.cursoPreseleccionadoSubject.asObservable();
 
+  private readonly borradorReprogramacionSubject = new BehaviorSubject<BorradorReprogramacion | null>(null);
+  private readonly estadoConsultaSubject = new BehaviorSubject<EstadoConsultaGuardado | null>(null);
+  private rolPreseleccionadoLogin: RolUsuario | null = null;
+
   constructor(private http: HttpClient) {
     const sesionGuardada = this.leerSesionStorage();
     if (sesionGuardada) {
@@ -71,8 +101,40 @@ export class HorarioService {
     }
   }
 
+  login(rol: RolUsuario, codigo: string, password: string): Observable<SesionUsuario> {
+    return this.http.post<SesionUsuario>(`${this.authApi}/login`, { rol, codigo, password });
+  }
+
   setRolActivo(rol: RolUsuario): void {
     this.rolActivoSubject.next(rol);
+  }
+
+  setRolPreseleccionadoLogin(rol: RolUsuario | null): void {
+    this.rolPreseleccionadoLogin = rol;
+  }
+
+  consumirRolPreseleccionadoLogin(): RolUsuario | null {
+    const rol = this.rolPreseleccionadoLogin;
+    this.rolPreseleccionadoLogin = null;
+    return rol;
+  }
+
+  setBorradorReprogramacion(borrador: BorradorReprogramacion | null): void {
+    this.borradorReprogramacionSubject.next(borrador ? { ...borrador } : null);
+  }
+
+  getBorradorReprogramacion(): BorradorReprogramacion | null {
+    const v = this.borradorReprogramacionSubject.getValue();
+    return v ? { ...v } : null;
+  }
+
+  setEstadoConsulta(estado: EstadoConsultaGuardado | null): void {
+    this.estadoConsultaSubject.next(estado ? { ...estado } : null);
+  }
+
+  getEstadoConsulta(): EstadoConsultaGuardado | null {
+    const v = this.estadoConsultaSubject.getValue();
+    return v ? { ...v } : null;
   }
 
   setSesionActiva(sesion: SesionUsuario | null): void {
@@ -93,6 +155,8 @@ export class HorarioService {
     this.sesionActivaSubject.next(null);
     this.rolActivoSubject.next('Coordinador Académico');
     this.cursoPreseleccionadoSubject.next(null);
+    this.borradorReprogramacionSubject.next(null);
+    this.estadoConsultaSubject.next(null);
     this.eliminarSesionStorage();
   }
 
@@ -161,8 +225,18 @@ export class HorarioService {
     return this.http.get<Reprogramacion[]>(`${this.api}/reprogramaciones`);
   }
 
-  confirmarReprogramacion(id: number): Observable<Reprogramacion> {
-    return this.http.put<Reprogramacion>(`${this.api}/reprogramaciones/${id}/confirmar`, {});
+  confirmarReprogramacion(id: number, observacion?: string): Observable<Reprogramacion> {
+    return this.http.put<Reprogramacion>(`${this.api}/reprogramaciones/${id}/confirmar`, {
+      observacion: observacion ?? ''
+    });
+  }
+
+  rechazarReprogramacion(id: number, observacion: string): Observable<Reprogramacion> {
+    return this.http.put<Reprogramacion>(`${this.api}/reprogramaciones/${id}/rechazar`, { observacion });
+  }
+
+  eliminarReprogramacion(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/reprogramaciones/${id}`);
   }
 
   registrarHorarioRegular(h: Horario): Observable<Horario> {
@@ -183,6 +257,12 @@ export class HorarioService {
 
   consultarDisponibilidadPresencial(r: Reprogramacion): Observable<DisponibilidadPresencial> {
     return this.http.post<DisponibilidadPresencial>(`${this.api}/disponibilidad-presencial`, r);
+  }
+
+  recomendarOpcionesRecuperacion(docenteCodigo: string, curso: string): Observable<OpcionRecuperacion[]> {
+    const d = encodeURIComponent(docenteCodigo.trim().toUpperCase());
+    const c = encodeURIComponent(curso.trim());
+    return this.http.get<OpcionRecuperacion[]>(`${this.api}/recomendaciones?docenteCodigo=${d}&curso=${c}`);
   }
 
   setUltimaReprogramacion(r: Reprogramacion | null): void {

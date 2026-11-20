@@ -9,6 +9,12 @@ interface NavEnlace {
   texto: string;
 }
 
+interface BreadcrumbItem {
+  label: string;
+  ruta: string;
+  activo: boolean;
+}
+
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -17,12 +23,12 @@ interface NavEnlace {
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  readonly titulo = 'Sistema de Verificación de Cruce de Horarios';
-  readonly subtitulo = 'Portal Académico UTP';
+  readonly titulo = 'Sistema de Gestión de Horarios';
+  readonly subtitulo = 'UTP · Portal Académico';
 
   rolActivo: RolUsuario = 'Coordinador Académico';
   sesionActiva: SesionUsuario | null = null;
-  rutaActual = '';
+  rutaActual = '/login';
 
   private subs = new Subscription();
 
@@ -32,7 +38,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private location: Location,
     private cdr: ChangeDetectorRef
   ) {
-    this.rutaActual = this.router.url;
+    this.rutaActual = this.router.url || '/login';
   }
 
   ngOnInit(): void {
@@ -62,12 +68,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.subs.unsubscribe();
   }
 
-  get mostrarUsuarioYMenu(): boolean {
-    const enLogin =
+  get enPantallaAcceso(): boolean {
+    return (
       this.rutaActual === '/' ||
       this.rutaActual.startsWith('/login') ||
-      this.rutaActual.startsWith('/registro');
-    return this.sesionActiva !== null && !enLogin;
+      this.rutaActual.startsWith('/registro')
+    );
+  }
+
+  get mostrarUsuarioYMenu(): boolean {
+    return this.sesionActiva !== null && !this.enPantallaAcceso;
   }
 
   get nombreUsuario(): string {
@@ -91,21 +101,58 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
     if (this.sesionActiva.rol === 'Estudiante') {
       return [
-        { ruta: '/consulta-horario', texto: 'MIS HORARIOS, SALONES Y RECUPERACIONES' }
+        { ruta: '/consulta-horario', texto: 'MIS HORARIOS Y RECUPERACIONES' }
       ];
     }
     if (this.sesionActiva.rol === 'Docente') {
       return [
-        { ruta: '/consulta-horario', texto: 'MI HORARIO, CURSOS Y SALONES' },
-        { ruta: '/registro-reprogramacion', texto: 'RECUPERAR CLASE (SALONES LUN–DOM)' },
-        { ruta: '/confirmacion', texto: 'CONSTANCIA DE CONFIRMACIÓN' }
+        { ruta: '/consulta-horario', texto: 'MI HORARIO Y SALONES' },
+        { ruta: '/registro-reprogramacion', texto: 'REPROGRAMACIÓN (LUN–DOM)' },
+        { ruta: '/confirmacion', texto: 'CONFIRMACIÓN' }
       ];
     }
     return [
-      { ruta: '/consulta-horario', texto: 'CONSULTAR HORARIO' },
-      { ruta: '/registro-reprogramacion', texto: 'REGISTRAR REPROGRAMACIÓN' },
-      { ruta: '/confirmacion', texto: 'CONFIRMACIÓN' }
+      { ruta: '/consulta-horario', texto: 'CONSULTA DE HORARIO' },
+      { ruta: '/registro-reprogramacion', texto: 'REPROGRAMACIÓN' },
+      { ruta: '/confirmacion', texto: 'CONFIRMACIÓN' },
+      { ruta: '/gestion', texto: 'GESTIÓN DE USUARIOS' }
     ];
+  }
+
+  get breadcrumbs(): BreadcrumbItem[] {
+    const url = this.rutaActual.split('?')[0];
+    const items: BreadcrumbItem[] = [
+      { label: 'Inicio de Sesión', ruta: '/login', activo: url === '/login' || url === '/registro' || url === '/' }
+    ];
+
+    if (url === '/' || url.startsWith('/login') || url.startsWith('/registro')) {
+      return items;
+    }
+
+    if (url.startsWith('/gestion')) {
+      items.push({ label: 'Gestión de Usuarios', ruta: '/gestion', activo: true });
+      return items;
+    }
+
+    if (url.startsWith('/consulta-horario') || url.startsWith('/consulta-docente') || url.startsWith('/consulta-estudiante')) {
+      items.push({ label: 'Consulta de Horario', ruta: '/consulta-horario', activo: true });
+      return items;
+    }
+
+    if (url.startsWith('/registro-reprogramacion')) {
+      items.push({ label: 'Consulta de Horario', ruta: '/consulta-horario', activo: false });
+      items.push({ label: 'Registro de Reprogramación', ruta: '/registro-reprogramacion', activo: true });
+      return items;
+    }
+
+    if (url.startsWith('/confirmacion')) {
+      items.push({ label: 'Consulta de Horario', ruta: '/consulta-horario', activo: false });
+      items.push({ label: 'Reprogramación', ruta: '/registro-reprogramacion', activo: false });
+      items.push({ label: 'Confirmación', ruta: '/confirmacion', activo: true });
+      return items;
+    }
+
+    return items;
   }
 
   regresar(): void {

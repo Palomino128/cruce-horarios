@@ -15,10 +15,10 @@ import { HorarioService } from '../../services/horario.service';
       <div class="portal-banner banner-docente">
         <div>
           <span class="portal-kicker">PERFIL DOCENTE · /docente</span>
-          <h2>Página del Docente</h2>
-          <p>Consulta tu horario gráfico semanal, solicita reprogramaciones con validación en vivo y registra nuevos docentes o cursos.</p>
+          <h2>Portal del Docente</h2>
+          <p>Consulta tu horario semanal, solicita reprogramaciones con validación en vivo y administra tus cursos.</p>
         </div>
-        <span class="portal-pill">Estado de solicitudes: Solicitado / Confirmado</span>
+        <span class="badge badge-info">Estado de solicitudes: Solicitado / Confirmado</span>
       </div>
 
       <app-consulta-horario [modoFijo]="'docente'"></app-consulta-horario>
@@ -37,21 +37,20 @@ export class PortalDocenteComponent implements OnInit {
 @Component({
   selector: 'app-portal-estudiante',
   standalone: true,
-  imports: [ConsultaHorarioComponent, GestionUsuariosComponent],
+  imports: [ConsultaHorarioComponent],
   styleUrl: './portales.component.scss',
   template: `
     <div class="portal-page">
       <div class="portal-banner banner-estudiante">
         <div>
           <span class="portal-kicker">PERFIL ESTUDIANTE · /estudiante</span>
-          <h2>Página del Estudiante</h2>
-          <p>Visualiza tu horario gráfico semanal por bloques, tus aulas y matrículas, o registra nuevos estudiantes.</p>
+          <h2>Portal del Estudiante</h2>
+          <p>Visualiza tu horario semanal por bloques académicos de 45 min, tus salones asignados y recuperaciones.</p>
         </div>
-        <span class="portal-pill">Códigos institucionales: U + dígitos</span>
+        <span class="badge badge-info">Códigos institucionales: U + dígitos</span>
       </div>
 
       <app-consulta-horario [modoFijo]="'estudiante'"></app-consulta-horario>
-      <app-gestion-usuarios [seccion]="'estudiante'"></app-gestion-usuarios>
     </div>
   `
 })
@@ -72,10 +71,10 @@ export class PortalEstudianteComponent implements OnInit {
       <div class="portal-banner banner-coordinador">
         <div>
           <span class="portal-kicker">PERFIL COORDINADOR ACADÉMICO · /coordinador</span>
-          <h2>Página del Coordinador Académico</h2>
-          <p>Revisa solicitudes en estado Solicitado, confirma reprogramaciones y administra docentes, estudiantes, aulas y matrículas.</p>
+          <h2>Portal del Coordinador Académico</h2>
+          <p>Revisa solicitudes en estado Solicitado, aprueba o rechaza reprogramaciones y administra la comunidad académica.</p>
         </div>
-        <span class="portal-pill">Aprobación Final: Confirmar</span>
+        <span class="badge badge-navy">Aprobación / Rechazo: Coordinación</span>
       </div>
 
       <app-confirmacion></app-confirmacion>

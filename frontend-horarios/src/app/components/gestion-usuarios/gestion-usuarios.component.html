@@ -1,27 +1,44 @@
 <div class="gestion-wrapper">
   <div class="section-header" *ngIf="seccion === 'todos'">
     <div>
-      <span class="eyebrow">IDENTIFICACIÓN AUTOMÁTICA SOLO POR CÓDIGO</span>
-      <h2>Registro e Información por Código (Docentes, Estudiantes y Coordinación)</h2>
+      <span class="eyebrow">ADMINISTRACIÓN ACADÉMICA · COORDINACIÓN DE INGENIERÍA</span>
+      <h2>Gestión de Usuarios, Horarios y Aprobación de Solicitudes</h2>
     </div>
-    <span class="badge badge-info">Perfil activo: {{ rolActivo }}</span>
+    <div class="header-actions">
+      <span class="badge badge-info">Perfil activo: {{ rolActivo }}</span>
+      <button type="button" class="btn btn-secondary" (click)="cargarTodo()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando…' : 'Sincronizar Datos' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card loading-state" *ngIf="cargando">
+    <span class="spinner"></span>
+    <span>Cargando docentes, estudiantes y solicitudes desde http://localhost:8082…</span>
+  </div>
+
+  <div class="toast-banner toast-danger" *ngIf="errorGeneral" role="alert">
+    <div>
+      <strong>Error de conexión</strong>
+      {{ errorGeneral }}
+    </div>
   </div>
 
   <div class="gestion-grid" [class.single-col]="seccion !== 'todos'" *ngIf="seccion !== 'coordinador'">
-    <!-- PANEL DOCENTES (SOLO CÓDIGO) -->
+    <!-- PANEL DOCENTES -->
     <section class="card panel-box" *ngIf="seccion === 'docente' || seccion === 'todos'">
       <div class="box-head">
-        <h3>Registro / Identificación de Docente por Código</h3>
-        <span class="badge badge-solicitado">{{ docentes.length }} registrados</span>
+        <h3>Docentes y Horarios Regulares</h3>
+        <span class="badge badge-info">Docentes</span>
       </div>
 
       <form [formGroup]="docenteForm" (ngSubmit)="identificarORegistrarDocente()" class="form-stack">
         <div class="row-code">
           <div class="field">
-            <label for="docCod">Código (ej. DOC-101, DOC-106 o COORD-01)</label>
+            <label for="docCod">Código (ej. DOC-101 o COORD-01)</label>
             <input id="docCod" type="text" maxlength="10" formControlName="codigo" placeholder="DOC-106" />
           </div>
-          <button type="submit" class="btn btn-primary">Ingresar / Registrar con Código</button>
+          <button type="submit" class="btn btn-primary" [disabled]="docenteForm.invalid">Identificar / Registrar</button>
         </div>
         <small class="field-err" *ngIf="docenteForm.get('codigo')?.touched && docenteForm.get('codigo')?.invalid">
           Use formato DOC-### o COORD-## (ej. DOC-106).
@@ -29,14 +46,13 @@
         <p class="feedback" *ngIf="msgDocente">{{ msgDocente }}</p>
       </form>
 
-      <!-- FICHA AUTOMÁTICA DEL DOCENTE -->
       <div class="auto-card" *ngIf="docenteFicha">
         <div class="auto-head">
           <div>
             <span class="auto-role">{{ docenteFicha.codigo.startsWith('COORD') ? 'COORDINADOR ACADÉMICO' : 'DOCENTE TITULAR' }}</span>
             <h4>{{ docenteFicha.nombres }} {{ docenteFicha.apellidos }}</h4>
           </div>
-          <span class="badge badge-confirmado">{{ docenteFicha.codigo }}</span>
+          <span class="badge badge-navy">{{ docenteFicha.codigo }}</span>
         </div>
 
         <div class="auto-list" *ngIf="docenteHorarios.length > 0">
@@ -46,22 +62,12 @@
             <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }}</span>
           </div>
         </div>
-
-        <div class="auto-list" *ngIf="docenteReprog.length > 0">
-          <strong>Reprogramaciones:</strong>
-          <div class="auto-item" *ngFor="let r of docenteReprog">
-            <span>{{ r.curso }} ({{ r.fecha }})</span>
-            <span class="badge" [class.badge-confirmado]="r.estado === 'CONFIRMADO'" [class.badge-solicitado]="r.estado !== 'CONFIRMADO'">
-              {{ etiquetaEstado(r.estado) }}
-            </span>
-          </div>
-        </div>
       </div>
 
       <hr class="divider" />
 
       <form [formGroup]="horarioForm" (ngSubmit)="registrarHorario()" class="form-stack">
-        <h4>Asignar Horario Adicional</h4>
+        <h4>Asignar Horario Regular (Bloques de 45 min · 07:00–22:30)</h4>
         <div class="row-2">
           <div class="field">
             <label for="horDoc">Docente</label>
@@ -96,25 +102,53 @@
             <input id="horFin" type="time" formControlName="horaFin" />
           </div>
         </div>
-        <button type="submit" class="btn btn-secondary">Agregar Horario</button>
-        <p class="feedback" *ngIf="msgHorario">{{ msgHorario }}</p>
+        <button type="submit" class="btn btn-sky" [disabled]="horarioForm.invalid">Agregar Horario</button>
+        <p class="feedback" [class.feedback-err]="errHorario" *ngIf="msgHorario">{{ msgHorario }}</p>
       </form>
+
+      <div class="mini-table-block">
+        <div class="mini-head">
+          <h4>Directorio de Docentes</h4>
+          <input type="text" placeholder="Filtrar docente…" [(ngModel)]="filtroDocente" (ngModelChange)="paginaDocentes = 1" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Código</th><th>Nombres y Apellidos</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of docentesPaginados">
+                <td><span class="badge badge-navy">{{ d.codigo }}</span></td>
+                <td>{{ d.nombres }} {{ d.apellidos }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <span>Directorio</span>
+          <div class="pagination-controls">
+            <button type="button" class="page-btn" [disabled]="paginaDocentes <= 1" (click)="paginaDocentes = paginaDocentes - 1">←</button>
+            <span class="page-indicator">{{ paginaDocentes }} / {{ totalPaginasDocentes }}</span>
+            <button type="button" class="page-btn" [disabled]="paginaDocentes >= totalPaginasDocentes" (click)="paginaDocentes = paginaDocentes + 1">→</button>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- PANEL ESTUDIANTES (SOLO CÓDIGO) -->
+    <!-- PANEL ESTUDIANTES -->
     <section class="card panel-box" *ngIf="seccion === 'estudiante' || seccion === 'todos'">
       <div class="box-head">
-        <h3>Registro / Identificación de Estudiante por Código</h3>
-        <span class="badge badge-solicitado">{{ estudiantes.length }} estudiantes</span>
+        <h3>Estudiantes y Matrículas</h3>
+        <span class="badge badge-info">Estudiantes</span>
       </div>
 
       <form [formGroup]="estudianteForm" (ngSubmit)="identificarORegistrarEstudiante()" class="form-stack">
         <div class="row-code">
           <div class="field">
-            <label for="estCod">Código (U + números, ej. U23231304 o U23200105)</label>
+            <label for="estCod">Código (U + números, ej. U23231304)</label>
             <input id="estCod" type="text" maxlength="9" formControlName="codigo" placeholder="U23200105" />
           </div>
-          <button type="submit" class="btn btn-primary">Ingresar / Registrar con Código</button>
+          <button type="submit" class="btn btn-primary" [disabled]="estudianteForm.invalid">Identificar / Registrar</button>
         </div>
         <small class="field-err" *ngIf="estudianteForm.get('codigo')?.touched && estudianteForm.get('codigo')?.invalid">
           Use formato U seguido de hasta 8 dígitos (ej. U23231304).
@@ -122,17 +156,16 @@
         <p class="feedback" *ngIf="msgEstudiante">{{ msgEstudiante }}</p>
       </form>
 
-      <!-- FICHA AUTOMÁTICA DEL ESTUDIANTE -->
       <div class="auto-card" *ngIf="estudianteFicha">
         <div class="auto-head">
           <div>
             <span class="auto-role">ESTUDIANTE MATRICULADO</span>
             <h4>{{ estudianteFicha.nombres }} {{ estudianteFicha.apellidos }}</h4>
           </div>
-          <span class="badge badge-confirmado">{{ estudianteFicha.codigo }}</span>
+          <span class="badge badge-navy">{{ estudianteFicha.codigo }}</span>
         </div>
         <div class="auto-list" *ngIf="estudianteHorarios.length > 0">
-          <strong>Cursos y Horarios Matriculados:</strong>
+          <strong>Cursos Matriculados:</strong>
           <div class="auto-item" *ngFor="let h of estudianteHorarios">
             <span>{{ h.curso }}</span>
             <span>{{ h.dia }} · {{ h.horaInicio.slice(0,5) }}-{{ h.horaFin.slice(0,5) }} · Aula {{ h.aula || 'Por asignar' }}</span>
@@ -144,29 +177,96 @@
 
       <form [formGroup]="matriculaForm" (ngSubmit)="registrarMatricula()" class="form-stack">
         <h4>Matricular en Curso Adicional</h4>
+        <div class="field sug-wrap">
+          <label for="busqMatEst">Buscar Estudiante (por código o nombre)</label>
+          <input
+            id="busqMatEst"
+            type="text"
+            [ngModel]="busquedaMatEst"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onBuscarMatEst($event)"
+            (focus)="mostrarSugMatEst = true"
+            placeholder="Ej. U25000001 o apellido…" />
+          <div class="sug-list" *ngIf="mostrarSugMatEst && sugerenciasMatEst.length > 0">
+            <button type="button" class="sug-btn" *ngFor="let e of sugerenciasMatEst" (click)="seleccionarMatEst(e)">
+              <span class="badge badge-info">{{ e.codigo }}</span>
+              <span>{{ e.nombres }} {{ e.apellidos }}</span>
+            </button>
+            <div class="sug-footer">
+              <span>Mostrando {{ sugerenciasMatEst.length }} coincidencia(s)</span>
+              <button type="button" (click)="mostrarSugMatEst = false">Cerrar</button>
+            </div>
+          </div>
+        </div>
         <div class="row-2">
           <div class="field">
-            <label for="matEst">Estudiante</label>
-            <select id="matEst" formControlName="estudianteCodigo">
-              <option *ngFor="let e of estudiantes" [value]="e.codigo">{{ e.codigo }} — {{ e.nombres }} {{ e.apellidos }}</option>
-            </select>
+            <label for="matEstCod">Código Estudiante</label>
+            <input id="matEstCod" type="text" formControlName="estudianteCodigo" placeholder="U23231304" />
           </div>
           <div class="field">
             <label for="matCurso">Curso</label>
             <input id="matCurso" type="text" formControlName="curso" placeholder="Ej. Desarrollo Web Integrado" />
           </div>
         </div>
-        <button type="submit" class="btn btn-secondary">Registrar Matrícula</button>
-        <p class="feedback" *ngIf="msgMatricula">{{ msgMatricula }}</p>
+        <button type="submit" class="btn btn-sky" [disabled]="matriculaForm.invalid">Registrar Matrícula</button>
+        <p class="feedback" [class.feedback-err]="errMatricula" *ngIf="msgMatricula">{{ msgMatricula }}</p>
       </form>
+
+      <div class="mini-table-block">
+        <div class="mini-head">
+          <h4>Padrón de Estudiantes</h4>
+          <input type="text" placeholder="Filtrar estudiante…" [(ngModel)]="filtroEstudiante" (ngModelChange)="paginaEstudiantes = 1" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Código</th><th>Nombres y Apellidos</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of estudiantesPaginados">
+                <td><span class="badge badge-info">{{ e.codigo }}</span></td>
+                <td>{{ e.nombres }} {{ e.apellidos }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar">
+          <span>Padrón</span>
+          <div class="pagination-controls">
+            <button type="button" class="page-btn" [disabled]="paginaEstudiantes <= 1" (click)="paginaEstudiantes = paginaEstudiantes - 1">←</button>
+            <span class="page-indicator">{{ paginaEstudiantes }} / {{ totalPaginasEstudiantes }}</span>
+            <button type="button" class="page-btn" [disabled]="paginaEstudiantes >= totalPaginasEstudiantes" (click)="paginaEstudiantes = paginaEstudiantes + 1">→</button>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 
-  <!-- PANEL DEL COORDINADOR (IDENTIFICACIÓN POR CÓDIGO + CONFIRMACIÓN) -->
+  <!-- PANEL EJECUTIVO DEL COORDINADOR -->
   <section class="card panel-box" *ngIf="seccion === 'coordinador' || seccion === 'todos'">
     <div class="box-head">
-      <h3>Panel del Coordinador Académico — Identificación por Código y Confirmación</h3>
-      <button type="button" class="btn btn-secondary" (click)="cargarTodo()">Actualizar</button>
+      <div>
+        <h3>Resumen Ejecutivo — Solicitudes de Reprogramación</h3>
+        <span class="sub-head">Aprueba o rechaza con observación y exporta el reporte consolidado</span>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="exportarReporteConsolidadoCsv()" [disabled]="reprogramaciones.length === 0">
+        Exportar Reporte CSV
+      </button>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-pending">
+        <span class="kpi-lbl">PENDIENTES (SOLICITADO)</span>
+        <strong class="kpi-val">{{ countPendientes }}</strong>
+      </div>
+      <div class="kpi-card kpi-approved">
+        <span class="kpi-lbl">CONFIRMADAS</span>
+        <strong class="kpi-val">{{ countConfirmadas }}</strong>
+      </div>
+      <div class="kpi-card kpi-rejected">
+        <span class="kpi-lbl">RECHAZADAS</span>
+        <strong class="kpi-val">{{ countRechazadas }}</strong>
+      </div>
     </div>
 
     <form [formGroup]="coordinadorForm" (ngSubmit)="identificarORegistrarCoordinador()" class="form-stack coord-form">
@@ -175,48 +275,105 @@
           <label for="coordCod">Código de Coordinador (ej. COORD-01)</label>
           <input id="coordCod" type="text" maxlength="10" formControlName="codigo" placeholder="COORD-01" />
         </div>
-        <button type="submit" class="btn btn-primary">Ingresar con Código de Coordinador</button>
+        <button type="submit" class="btn btn-primary" [disabled]="coordinadorForm.invalid">Validar Coordinador</button>
       </div>
     </form>
 
-    <div class="auto-card" *ngIf="coordinadorFicha">
-      <div class="auto-head">
-        <div>
-          <span class="auto-role">COORDINADOR ACADÉMICO ACTIVO</span>
-          <h4>{{ coordinadorFicha.nombres }} {{ coordinadorFicha.apellidos }}</h4>
-        </div>
-        <span class="badge badge-confirmado">{{ coordinadorFicha.codigo }}</span>
-      </div>
+    <div class="status-tabs">
+      <button type="button" class="st-tab" [class.active]="filtroEstadoReprog === 'TODAS'" (click)="cambiarFiltroEstado('TODAS')">Todas ({{ reprogramaciones.length }})</button>
+      <button type="button" class="st-tab" [class.active]="filtroEstadoReprog === 'SOLICITADO'" (click)="cambiarFiltroEstado('SOLICITADO')">Pendientes ({{ countPendientes }})</button>
+      <button type="button" class="st-tab" [class.active]="filtroEstadoReprog === 'CONFIRMADO'" (click)="cambiarFiltroEstado('CONFIRMADO')">Confirmadas ({{ countConfirmadas }})</button>
+      <button type="button" class="st-tab" [class.active]="filtroEstadoReprog === 'RECHAZADO'" (click)="cambiarFiltroEstado('RECHAZADO')">Rechazadas ({{ countRechazadas }})</button>
     </div>
 
     <p class="feedback" *ngIf="msgCoordinador">{{ msgCoordinador }}</p>
 
-    <div class="coord-list" *ngIf="reprogramaciones.length > 0; else sinReprog">
-      <div class="coord-item" *ngFor="let r of reprogramaciones">
-        <div>
-          <strong>{{ r.curso }} ({{ r.docenteCodigo }})</strong>
-          <span>Fecha: {{ r.fecha }} | {{ r.horaInicio.slice(0,5) }} - {{ r.horaFin.slice(0,5) }} | Aula: {{ r.aula || 'Por asignar' }}</span>
-        </div>
-        <div class="coord-actions">
-          <span
-            class="badge"
-            [class.badge-confirmado]="r.estado === 'CONFIRMADO'"
-            [class.badge-solicitado]="r.estado !== 'CONFIRMADO'">
-            {{ etiquetaEstado(r.estado) }}
-          </span>
-          <button
-            *ngIf="r.estado !== 'CONFIRMADO'"
-            type="button"
-            class="btn btn-danger"
-            (click)="confirmarSolicitud(r)">
-            Confirmar
-          </button>
+    <div class="table-wrap" *ngIf="reprogramacionesFiltradas.length > 0; else sinReprog">
+      <table>
+        <thead>
+          <tr>
+            <th>Curso y Motivo</th>
+            <th>Docente</th>
+            <th>Fecha</th>
+            <th>Horario</th>
+            <th>Aula</th>
+            <th>Asistencia</th>
+            <th>Estado</th>
+            <th>Observación / Decisión</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of reprogramacionesPaginadas">
+            <td class="bold-cell">
+              <div>{{ r.curso }}</div>
+              <small class="motivo-mini" *ngIf="r.motivo">{{ r.motivo }}</small>
+            </td>
+            <td><span class="badge badge-navy">{{ r.docenteCodigo }}</span></td>
+            <td>{{ r.fecha }}</td>
+            <td>{{ r.horaInicio.slice(0,5) }} – {{ r.horaFin.slice(0,5) }}</td>
+            <td><span class="badge badge-info">{{ r.aula || 'Por asignar' }}</span></td>
+            <td>
+              <span
+                class="badge"
+                *ngIf="r.porcentajeAsistencia !== undefined && r.porcentajeAsistencia !== null"
+                [class.badge-success]="r.porcentajeAsistencia > 50"
+                [class.badge-warning]="r.porcentajeAsistencia <= 50">
+                {{ r.porcentajeAsistencia }}%
+              </span>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [class.badge-success]="r.estado === 'CONFIRMADO'"
+                [class.badge-danger]="r.estado === 'RECHAZADO'"
+                [class.badge-solicitado]="r.estado !== 'CONFIRMADO' && r.estado !== 'RECHAZADO'">
+                {{ etiquetaEstado(r.estado) }}
+              </span>
+            </td>
+            <td>
+              <div class="decision-cell" *ngIf="r.estado !== 'CONFIRMADO' && r.estado !== 'RECHAZADO' && r.id">
+                <input
+                  type="text"
+                  class="obs-input"
+                  [(ngModel)]="observacionesPorId[r.id]"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="Observación (opcional)" />
+                <div class="btn-pair">
+                  <button type="button" class="btn btn-success btn-sm" (click)="confirmarSolicitud(r)">Confirmar</button>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="rechazarSolicitud(r)">Rechazar</button>
+                </div>
+              </div>
+              <div *ngIf="r.estado === 'CONFIRMADO'">
+                <span class="ok-text">✔ Aprobada</span>
+                <small class="obs-mini" *ngIf="r.observacionCoordinador">{{ r.observacionCoordinador }}</small>
+              </div>
+              <div *ngIf="r.estado === 'RECHAZADO'">
+                <span class="rej-text">✖ Rechazada</span>
+                <small class="obs-mini" *ngIf="r.observacionCoordinador">{{ r.observacionCoordinador }}</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination-bar" *ngIf="totalPaginasReprog > 1">
+        <span>Mostrando {{ reprogramacionesPaginadas.length }} de {{ reprogramacionesFiltradas.length }}</span>
+        <div class="pagination-controls">
+          <button type="button" class="page-btn" [disabled]="paginaReprog <= 1" (click)="paginaReprog = paginaReprog - 1">← Anterior</button>
+          <span class="page-indicator">Página {{ paginaReprog }} de {{ totalPaginasReprog }}</span>
+          <button type="button" class="page-btn" [disabled]="paginaReprog >= totalPaginasReprog" (click)="paginaReprog = paginaReprog + 1">Siguiente →</button>
         </div>
       </div>
     </div>
 
     <ng-template #sinReprog>
-      <p class="empty-msg">No hay solicitudes registradas todavía.</p>
+      <p class="empty-msg">No hay solicitudes de reprogramación para el filtro seleccionado.</p>
     </ng-template>
   </section>
+
+  <div class="card nav-footer-card" *ngIf="seccion === 'todos'">
+    <div class="step-footer" style="margin-top: 0; padding-top: 0; border-top: none;">
+      <button type="button" class="btn btn-secondary" (click)="regresar()">← Regresar</button>
+      <button type="button" class="btn btn-primary" (click)="irAConsulta()">Ir a Consulta de Horarios →</button>
+    </div>
+  </div>
 </div>

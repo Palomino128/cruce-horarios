@@ -1,16 +1,18 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { HorarioService } from '../../services/horario.service';
+import { DisponibilidadPresencial, HorarioService, OpcionRecuperacion } from '../../services/horario.service';
 import { DocenteService } from '../../services/docente.service';
 import { Docente } from '../../models/docente.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
 
 type EstadoEnvio = 'idle' | 'enviando' | 'ok' | 'conflicto' | 'error';
+type FiltroRecomendacion = 'TODAS' | 'RECOMENDADAS' | 'BAJAS';
 
 interface DiaSemana {
   clave: string;
@@ -54,12 +56,16 @@ const SALONES_PRINCIPALES = [
   styleUrl: './registro-reprogramacion.component.scss'
 })
 export class RegistroReprogramacionComponent implements OnInit {
+  readonly INTERVALO_MINUTOS = 15;
+  readonly HORA_MIN_MINUTOS = 7 * 60;        // 07:00 am
+  readonly HORA_MAX_MINUTOS = 22 * 60 + 30;  // 10:30 pm (22:30)
+
   readonly reglas = [
-    'El docente no puede tener otra clase (regular o reprogramada) en el mismo horario.',
-    'Ningún estudiante matriculado en el curso puede presentar cruce con otra clase.',
-    'El salón seleccionado debe estar disponible en el día y franja horaria solicitados.',
-    'Debe existir un intervalo mínimo de 15 minutos entre clases consecutivas.',
-    'La hora de fin debe ser posterior a la hora de inicio.'
+    'La hora académica dura 45 minutos (sesiones de 90 min = 2 horas académicas) en el horario universitario de 07:00 am a 10:30 pm.',
+    'Los alumnos matriculados en el curso (mínimo 15 por sección, sin repetir estudiantes) ya están inscritos; el sistema calcula el porcentaje de asistencia.',
+    'El sistema recomienda fechas y horarios con asistencia mayor al 50%, manteniendo visibles todas las opciones (altas y bajas).',
+    'Debe existir un intervalo mínimo de 15 minutos de traslado del docente entre clases consecutivas.',
+    'El salón seleccionado debe estar disponible en el día y franja solicitados.'
   ];
 
   readonly diasSemana: DiaSemana[] = [
@@ -73,16 +79,23 @@ export class RegistroReprogramacionComponent implements OnInit {
   ];
 
   readonly franjas: FranjaHoraria[] = [
-    { inicio: '07:00', fin: '09:00', etiqueta: '07:00 – 09:00' },
-    { inicio: '08:00', fin: '10:00', etiqueta: '08:00 – 10:00' },
-    { inicio: '09:30', fin: '11:30', etiqueta: '09:30 – 11:30' },
-    { inicio: '10:00', fin: '12:00', etiqueta: '10:00 – 12:00' },
-    { inicio: '12:00', fin: '14:00', etiqueta: '12:00 – 14:00' },
-    { inicio: '14:00', fin: '16:00', etiqueta: '14:00 – 16:00' },
-    { inicio: '14:30', fin: '16:30', etiqueta: '14:30 – 16:30' },
-    { inicio: '16:00', fin: '18:00', etiqueta: '16:00 – 18:00' },
-    { inicio: '17:00', fin: '19:00', etiqueta: '17:00 – 19:00' },
-    { inicio: '19:30', fin: '21:30', etiqueta: '19:30 – 21:30' }
+    { inicio: '07:00', fin: '08:30', etiqueta: '07:00 – 08:30 (2 h acad.)' },
+    { inicio: '08:45', fin: '10:15', etiqueta: '08:45 – 10:15 (2 h acad.)' },
+    { inicio: '10:30', fin: '12:00', etiqueta: '10:30 – 12:00 (2 h acad.)' },
+    { inicio: '12:15', fin: '13:45', etiqueta: '12:15 – 13:45 (2 h acad.)' },
+    { inicio: '14:00', fin: '15:30', etiqueta: '14:00 – 15:30 (2 h acad.)' },
+    { inicio: '15:45', fin: '17:15', etiqueta: '15:45 – 17:15 (2 h acad.)' },
+    { inicio: '17:30', fin: '19:00', etiqueta: '17:30 – 19:00 (2 h acad.)' },
+    { inicio: '19:15', fin: '20:45', etiqueta: '19:15 – 20:45 (2 h acad.)' },
+    { inicio: '21:00', fin: '22:30', etiqueta: '21:00 – 22:30 (2 h acad.)' }
+  ];
+
+  readonly motivosCatalogo: string[] = [
+    'Feriado institucional',
+    'Comisión / Evento académico',
+    'Licencia / Salud docente',
+    'Contingencia técnica o de infraestructura',
+    'Acuerdo académico con la sección'
   ];
 
   modelo: Reprogramacion = this.modeloVacio();
@@ -99,6 +112,18 @@ export class RegistroReprogramacionComponent implements OnInit {
 
   salonFiltro = 'TODOS';
 
+  verificandoDisponibilidad = false;
+  disponibilidadPresencial: DisponibilidadPresencial | null = null;
+  errorDisponibilidad = '';
+
+  // Opciones recomendadas de fecha y hora (todas visibles: >50% recomendadas y <=50% bajas)
+  cargandoRecomendaciones = false;
+  opcionesRecuperacion: OpcionRecuperacion[] = [];
+  filtroRecomendacion: FiltroRecomendacion = 'TODAS';
+  paginaOpciones = 1;
+  tamPaginaOpciones = 8;
+
+  cargandoCatalogos = true;
   estado: EstadoEnvio = 'idle';
   mensaje = '';
 
@@ -106,6 +131,7 @@ export class RegistroReprogramacionComponent implements OnInit {
     private horarioService: HorarioService,
     private docenteService: DocenteService,
     private router: Router,
+    private location: Location,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -122,6 +148,20 @@ export class RegistroReprogramacionComponent implements OnInit {
     }
 
     const preseleccionado = this.horarioService.consumirCursoPreseleccionado();
+    const borrador = this.horarioService.getBorradorReprogramacion();
+
+    if (borrador && !preseleccionado) {
+      this.modelo = {
+        docenteCodigo: borrador.docenteCodigo,
+        curso: borrador.curso,
+        fecha: borrador.fecha,
+        horaInicio: borrador.horaInicio,
+        horaFin: borrador.horaFin,
+        aula: borrador.aula ?? '',
+        motivo: borrador.motivo || this.motivosCatalogo[0]
+      };
+      this.salonFiltro = borrador.salonFiltro || 'TODOS';
+    }
 
     if (sesion.rol === 'Docente' && sesion.codigo) {
       this.esDocenteEnSesion = true;
@@ -129,17 +169,19 @@ export class RegistroReprogramacionComponent implements OnInit {
       if (preseleccionado?.docenteCodigo?.toUpperCase() === sesion.codigo.toUpperCase()) {
         this.modelo.curso = preseleccionado.curso;
       }
-      this.cargarHorariosDocente(true);
+      this.cargarHorariosDocente(!this.modelo.curso);
     } else if (preseleccionado) {
       this.modelo.docenteCodigo = preseleccionado.docenteCodigo;
       this.modelo.curso = preseleccionado.curso;
+      this.cargarHorariosDocente(false);
+    } else if (this.modelo.docenteCodigo) {
       this.cargarHorariosDocente(false);
     }
 
     if (!this.modelo.fecha) {
       this.modelo.fecha = this.proximaFechaParaDia('MONDAY');
-      this.modelo.horaInicio = '10:00';
-      this.modelo.horaFin = '12:00';
+      this.modelo.horaInicio = '08:45';
+      this.modelo.horaFin = '10:15';
     }
 
     forkJoin({
@@ -166,8 +208,158 @@ export class RegistroReprogramacionComponent implements OnInit {
         }
       }
       this.salonesCatalogo = [...aulas].sort();
+      this.cargandoCatalogos = false;
+
+      if (this.modelo.docenteCodigo && this.modelo.curso) {
+        this.cargarRecomendaciones();
+      }
       this.cdr.markForCheck();
     });
+  }
+
+  // ===== VALIDACIONES VISUALES (Rango horario e Intervalo 15 min) =====
+
+  get alertaRangoHorario(): string {
+    if (!this.modelo.horaInicio || !this.modelo.horaFin) {
+      return '';
+    }
+    const ini = this.aMinutos(this.modelo.horaInicio);
+    const fin = this.aMinutos(this.modelo.horaFin);
+    if (fin <= ini) {
+      return 'La hora de fin debe ser posterior a la hora de inicio.';
+    }
+    if (ini < this.HORA_MIN_MINUTOS || fin > this.HORA_MAX_MINUTOS) {
+      return 'El horario universitario permitido es de 07:00 am a 10:30 pm (22:30).';
+    }
+    const duracion = fin - ini;
+    if (duracion < 45 || duracion % 45 !== 0) {
+      return `La duración debe ser múltiplo de la hora académica de 45 minutos (ej. 45 min, 90 min o 135 min). Actual: ${duracion} min.`;
+    }
+    return '';
+  }
+
+  get alertaIntervaloTraslado(): string {
+    if (!this.modelo.docenteCodigo || !this.modelo.fecha || !this.modelo.horaInicio || !this.modelo.horaFin) {
+      return '';
+    }
+    const ini = this.aMinutos(this.modelo.horaInicio);
+    const fin = this.aMinutos(this.modelo.horaFin);
+    if (fin <= ini) {
+      return '';
+    }
+
+    const dia = this.diaDeFecha(this.modelo.fecha);
+    const docCod = this.modelo.docenteCodigo.trim().toUpperCase();
+
+    const sesionesDocente: Array<{ curso: string; hi: string; hf: string }> = [];
+
+    if (dia) {
+      for (const h of this.horariosDocente) {
+        if (h.dia === dia) {
+          sesionesDocente.push({ curso: h.curso, hi: h.horaInicio, hf: h.horaFin });
+        }
+      }
+    }
+
+    for (const r of this.reprogramacionesCatalogo) {
+      if (r.estado !== 'RECHAZADO' && r.docenteCodigo?.toUpperCase() === docCod && r.fecha === this.modelo.fecha) {
+        sesionesDocente.push({ curso: `${r.curso} (Recuperación)`, hi: r.horaInicio, hf: r.horaFin });
+      }
+    }
+
+    for (const s of sesionesDocente) {
+      const sIni = this.aMinutos(s.hi);
+      const sFin = this.aMinutos(s.hf);
+      if (ini < sFin && fin > sIni) {
+        return `Cruce directo detectado: el docente ya dicta "${s.curso}" de ${this.hora(s.hi)} a ${this.hora(s.hf)}.`;
+      }
+      const gapAntes = ini >= sFin ? ini - sFin : Number.POSITIVE_INFINITY;
+      const gapDespues = sIni >= fin ? sIni - fin : Number.POSITIVE_INFINITY;
+      const gapMin = Math.min(gapAntes, gapDespues);
+      if (gapMin < this.INTERVALO_MINUTOS) {
+        return `Intervalo de traslado insuficiente (${gapMin} min): se requieren al menos ${this.INTERVALO_MINUTOS} minutos entre "${s.curso}" (${this.hora(s.hi)}–${this.hora(s.hf)}) y la nueva sesión.`;
+      }
+    }
+
+    return '';
+  }
+
+  get formularioListoParaGuardar(): boolean {
+    return Boolean(
+      this.modelo.docenteCodigo?.trim() &&
+      this.modelo.curso?.trim() &&
+      this.modelo.fecha &&
+      this.modelo.horaInicio &&
+      this.modelo.horaFin &&
+      !this.alertaRangoHorario &&
+      !this.alertaIntervaloTraslado &&
+      this.estado !== 'enviando'
+    );
+  }
+
+  get puedeVerificarDisponibilidad(): boolean {
+    return Boolean(
+      this.modelo.docenteCodigo?.trim() &&
+      this.modelo.curso?.trim() &&
+      this.modelo.fecha &&
+      this.modelo.horaInicio &&
+      this.modelo.horaFin &&
+      !this.alertaRangoHorario &&
+      !this.verificandoDisponibilidad
+    );
+  }
+
+  // ===== OPCIONES DE RECUPERACIÓN (>50% recomendadas + <=50% visibles) =====
+
+  get opcionesFiltradas(): OpcionRecuperacion[] {
+    if (this.filtroRecomendacion === 'RECOMENDADAS') {
+      return this.opcionesRecuperacion.filter(o => o.recomendada);
+    }
+    if (this.filtroRecomendacion === 'BAJAS') {
+      return this.opcionesRecuperacion.filter(o => !o.recomendada);
+    }
+    return this.opcionesRecuperacion;
+  }
+
+  get totalPaginasOpciones(): number {
+    return Math.max(1, Math.ceil(this.opcionesFiltradas.length / this.tamPaginaOpciones));
+  }
+
+  get opcionesPaginadas(): OpcionRecuperacion[] {
+    const ini = (this.paginaOpciones - 1) * this.tamPaginaOpciones;
+    return this.opcionesFiltradas.slice(ini, ini + this.tamPaginaOpciones);
+  }
+
+  cambiarFiltroRecomendacion(f: FiltroRecomendacion): void {
+    this.filtroRecomendacion = f;
+    this.paginaOpciones = 1;
+  }
+
+  cargarRecomendaciones(): void {
+    const doc = (this.modelo.docenteCodigo ?? '').trim().toUpperCase();
+    const cur = (this.modelo.curso ?? '').trim();
+    if (!doc || !cur) {
+      this.opcionesRecuperacion = [];
+      return;
+    }
+    this.cargandoRecomendaciones = true;
+    this.horarioService.recomendarOpcionesRecuperacion(doc, cur)
+      .pipe(catchError(() => of([] as OpcionRecuperacion[])))
+      .subscribe(opciones => {
+        this.opcionesRecuperacion = opciones;
+        this.paginaOpciones = 1;
+        this.cargandoRecomendaciones = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  seleccionarOpcionRecomendada(op: OpcionRecuperacion): void {
+    this.modelo.fecha = op.fecha;
+    this.modelo.horaInicio = this.hora(op.horaInicio);
+    this.modelo.horaFin = this.hora(op.horaFin);
+    this.modelo.aula = op.aulaSugerida;
+    this.guardarBorrador();
+    this.verificarDisponibilidad();
   }
 
   get docenteSeleccionado(): Docente | null {
@@ -275,6 +467,7 @@ export class RegistroReprogramacionComponent implements OnInit {
     if (this.salonFiltro === 'TODOS') {
       this.salonFiltro = aula;
     }
+    this.guardarBorrador();
   }
 
   seleccionarBloqueDisponible(dia: string, franja: FranjaHoraria, salon: string): void {
@@ -285,6 +478,8 @@ export class RegistroReprogramacionComponent implements OnInit {
     this.modelo.horaInicio = franja.inicio;
     this.modelo.horaFin = franja.fin;
     this.modelo.fecha = this.proximaFechaParaDia(dia);
+    this.disponibilidadPresencial = null;
+    this.guardarBorrador();
   }
 
   onDocenteChange(): void {
@@ -298,6 +493,7 @@ export class RegistroReprogramacionComponent implements OnInit {
     } else if (!cod) {
       this.horariosDocente = [];
     }
+    this.guardarBorrador();
   }
 
   onCursoChange(): void {
@@ -309,6 +505,11 @@ export class RegistroReprogramacionComponent implements OnInit {
     if (encontrado && !(this.modelo.docenteCodigo ?? '').trim()) {
       this.modelo.docenteCodigo = encontrado.docenteCodigo;
       this.cargarHorariosDocente();
+    }
+    this.disponibilidadPresencial = null;
+    this.guardarBorrador();
+    if (this.modelo.docenteCodigo && this.modelo.curso) {
+      this.cargarRecomendaciones();
     }
   }
 
@@ -325,6 +526,9 @@ export class RegistroReprogramacionComponent implements OnInit {
         if (preseleccionarCurso && !this.modelo.curso && hs.length > 0) {
           this.modelo.curso = hs[0].curso;
         }
+        if (this.modelo.docenteCodigo && this.modelo.curso) {
+          this.cargarRecomendaciones();
+        }
         this.cdr.markForCheck();
       },
       error: () => {
@@ -334,48 +538,56 @@ export class RegistroReprogramacionComponent implements OnInit {
     });
   }
 
-  nombreDocente(docenteCodigo: string): string {
-    const d = this.docentesMap[docenteCodigo?.trim().toUpperCase()];
-    return d ? `${d.nombres} ${d.apellidos}` : 'Docente titular';
-  }
+  verificarDisponibilidad(): void {
+    if (!this.puedeVerificarDisponibilidad) {
+      return;
+    }
+    this.verificandoDisponibilidad = true;
+    this.errorDisponibilidad = '';
+    this.disponibilidadPresencial = null;
 
-  diaEs(dia: string): string {
-    return DIAS_ES[dia?.toUpperCase()] ?? dia;
-  }
-
-  normalizarHora(valor: string): string {
-    const v = (valor ?? '').trim();
-    return /^\d{2}:\d{2}$/.test(v) ? `${v}:00` : v;
-  }
-
-  hora(valor: string): string {
-    return (valor ?? '').slice(0, 5);
+    const payload = this.construirPayload();
+    this.horarioService.consultarDisponibilidadPresencial(payload).subscribe({
+      next: disp => {
+        this.verificandoDisponibilidad = false;
+        this.disponibilidadPresencial = disp;
+        this.guardarBorrador();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.verificandoDisponibilidad = false;
+        this.errorDisponibilidad = 'No se pudo consultar el porcentaje de asistencia en http://localhost:8082.';
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   guardar(form: NgForm): void {
-    if (form.invalid) {
+    if (form.invalid || !this.formularioListoParaGuardar) {
       form.control.markAllAsTouched();
       return;
     }
 
-    const aulaLimpia = (this.modelo.aula ?? '').trim().toUpperCase();
-    const payload: Reprogramacion = {
-      docenteCodigo: this.modelo.docenteCodigo.trim().toUpperCase(),
-      curso: this.modelo.curso.trim(),
-      fecha: this.modelo.fecha,
-      horaInicio: this.normalizarHora(this.modelo.horaInicio),
-      horaFin: this.normalizarHora(this.modelo.horaFin),
-      ...(aulaLimpia ? { aula: aulaLimpia } : {})
-    };
-
+    const payload = this.construirPayload();
     this.estado = 'enviando';
     this.mensaje = '';
+    this.guardarBorrador();
 
     this.horarioService.reprogramar(payload).subscribe({
       next: texto => {
         this.estado = 'ok';
         this.mensaje = texto || 'Reprogramación registrada sin cruces.';
         this.horarioService.setUltimaReprogramacion(payload);
+        const doc = this.docenteSeleccionado;
+        this.horarioService.setUltimaConfirmacion({
+          solicitudNumero: `#REP-2026-${String(Math.floor(1000 + Math.random() * 8999))}`,
+          estado: 'SOLICITADO',
+          mensaje: this.mensaje,
+          docenteNombre: doc ? `${doc.nombres} ${doc.apellidos}` : undefined,
+          reprogramacion: payload,
+          fechaRegistro: new Date().toISOString(),
+          disponibilidadPresencial: this.disponibilidadPresencial
+        });
         this.recargarReprogramaciones();
         this.cdr.markForCheck();
       },
@@ -406,15 +618,79 @@ export class RegistroReprogramacionComponent implements OnInit {
     this.modelo.fecha = this.proximaFechaParaDia('MONDAY');
     this.modelo.horaInicio = '10:00';
     this.modelo.horaFin = '12:00';
+    this.disponibilidadPresencial = null;
+    this.errorDisponibilidad = '';
     if (!docenteFijo) {
       this.horariosDocente = [];
+      this.opcionesRecuperacion = [];
     }
     this.estado = 'idle';
     this.mensaje = '';
+    this.horarioService.setBorradorReprogramacion(null);
+  }
+
+  regresar(): void {
+    this.guardarBorrador();
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/consulta-horario']);
+    }
   }
 
   irAConfirmacion(): void {
+    this.guardarBorrador();
     this.router.navigate(['/confirmacion']);
+  }
+
+  guardarBorrador(): void {
+    this.horarioService.setBorradorReprogramacion({
+      docenteCodigo: this.modelo.docenteCodigo,
+      curso: this.modelo.curso,
+      fecha: this.modelo.fecha,
+      horaInicio: this.modelo.horaInicio,
+      horaFin: this.modelo.horaFin,
+      aula: this.modelo.aula,
+      motivo: this.modelo.motivo,
+      salonFiltro: this.salonFiltro
+    });
+  }
+
+  nombreDocente(docenteCodigo: string): string {
+    const d = this.docentesMap[docenteCodigo?.trim().toUpperCase()];
+    return d ? `${d.nombres} ${d.apellidos}` : 'Docente titular';
+  }
+
+  diaEs(dia: string): string {
+    return DIAS_ES[dia?.toUpperCase()] ?? dia;
+  }
+
+  fechaEs(fecha: string): string {
+    const [y, m, d] = (fecha ?? '').split('-');
+    return y && m && d ? `${d}/${m}/${y}` : fecha;
+  }
+
+  normalizarHora(valor: string): string {
+    const v = (valor ?? '').trim();
+    return /^\d{2}:\d{2}$/.test(v) ? `${v}:00` : v;
+  }
+
+  hora(valor: string): string {
+    return (valor ?? '').slice(0, 5);
+  }
+
+  private construirPayload(): Reprogramacion {
+    const aulaLimpia = (this.modelo.aula ?? '').trim().toUpperCase();
+    const motivoLimpio = (this.modelo.motivo ?? '').trim() || this.motivosCatalogo[0];
+    return {
+      docenteCodigo: this.modelo.docenteCodigo.trim().toUpperCase(),
+      curso: this.modelo.curso.trim(),
+      fecha: this.modelo.fecha,
+      horaInicio: this.normalizarHora(this.modelo.horaInicio),
+      horaFin: this.normalizarHora(this.modelo.horaFin),
+      motivo: motivoLimpio,
+      ...(aulaLimpia ? { aula: aulaLimpia } : {})
+    };
   }
 
   private recargarReprogramaciones(): void {
@@ -446,6 +722,7 @@ export class RegistroReprogramacionComponent implements OnInit {
     }
 
     for (const r of this.reprogramacionesCatalogo) {
+      if (r.estado === 'RECHAZADO') continue;
       const coincideDia = fechaExacta ? r.fecha === fechaExacta : this.diaDeFecha(r.fecha) === dia;
       if (coincideDia && r.aula?.trim() && this.solapan(r.horaInicio, r.horaFin, a, b)) {
         const aula = r.aula.trim().toUpperCase();
@@ -497,6 +774,14 @@ export class RegistroReprogramacionComponent implements OnInit {
   }
 
   private modeloVacio(): Reprogramacion {
-    return { docenteCodigo: '', curso: '', fecha: '', horaInicio: '', horaFin: '', aula: '' };
+    return {
+      docenteCodigo: '',
+      curso: '',
+      fecha: '',
+      horaInicio: '',
+      horaFin: '',
+      aula: '',
+      motivo: 'Feriado institucional'
+    };
   }
 }

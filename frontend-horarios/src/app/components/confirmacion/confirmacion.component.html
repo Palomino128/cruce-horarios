@@ -1,15 +1,34 @@
 <section class="confirmacion">
+  <!-- Cabecera institucional solo visible en impresión -->
+  <div class="print-only-header">
+    <strong>UNIVERSIDAD TECNOLÓGICA DEL PERÚ — FACULTAD DE INGENIERÍA</strong>
+    <span>CONSTANCIA OFICIAL DE REPROGRAMACIÓN DE CLASE · PERIODO 2026-II</span>
+  </div>
+
   <article class="card">
     <header class="card-head">
       <div>
-        <span class="kicker">Constancia Oficial de Reprogramación</span>
+        <span class="kicker">CONSTANCIA OFICIAL DE REPROGRAMACIÓN</span>
         <h2>Solicitud N.º {{ numeroSolicitud }}</h2>
       </div>
-      <span class="badge-estado">Estado: Procesado</span>
+      <span
+        class="badge"
+        [class.badge-success]="estaConfirmada"
+        [class.badge-danger]="estaRechazada"
+        [class.badge-info]="!estaConfirmada && !estaRechazada">
+        Estado: {{ etiquetaEstado }}
+      </span>
     </header>
 
+    @if (cargando) {
+      <div class="loading-state no-print">
+        <span class="spinner"></span>
+        <span>Cargando constancia y solicitudes registradas…</span>
+      </div>
+    }
+
     @if (reprogramaciones.length > 1) {
-      <div class="history-bar">
+      <div class="history-bar no-print">
         <span class="history-label">Reprogramaciones registradas ({{ reprogramaciones.length }}):</span>
         <div class="history-chips">
           @for (item of reprogramaciones; track $index) {
@@ -25,46 +44,112 @@
       </div>
     }
 
+    @if (mensajeAccion) {
+      <div class="pad-wrap no-print">
+        <div class="toast-banner toast-success" role="status">
+          <div>
+            <strong>Acción completada</strong>
+            {{ mensajeAccion }}
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (errorAccion) {
+      <div class="pad-wrap no-print">
+        <div class="toast-banner toast-danger" role="alert">
+          <div>
+            <strong>Error en la operación</strong>
+            {{ errorAccion }}
+          </div>
+        </div>
+      </div>
+    }
+
     @if (reprogramacion) {
-      <div class="banner-ok">
-        <strong>✔ Reprogramación registrada sin cruces</strong>
+      <div class="banner-ok" [class.banner-rechazada]="estaRechazada">
+        <div class="banner-top">
+          <strong>
+            @if (estaRechazada) {
+              ✖ Solicitud observada / rechazada por Coordinación
+            } @else {
+              ✔ Reprogramación académica registrada
+            }
+          </strong>
+          @if (reprogramacion.porcentajeAsistencia !== undefined && reprogramacion.porcentajeAsistencia !== null) {
+            <span class="badge" [class.badge-success]="reprogramacion.porcentajeAsistencia > 50" [class.badge-warning]="reprogramacion.porcentajeAsistencia <= 50">
+              Asistencia estimada: {{ reprogramacion.porcentajeAsistencia }}%
+            </span>
+          }
+        </div>
+
         <p class="detalle">
           <span><b>Docente:</b> {{ reprogramacion.docenteCodigo }}{{ docente ? ' — ' + docente.nombres + ' ' + docente.apellidos : '' }}</span>
           <span class="sep">|</span>
           <span><b>Curso:</b> {{ reprogramacion.curso }}</span>
           <span class="sep">|</span>
-          <span><b>Nueva fecha y horario:</b> {{ fechaFormateada }} · {{ hora(reprogramacion.horaInicio) }} – {{ hora(reprogramacion.horaFin) }}</span>
+          <span><b>Fecha y horario:</b> {{ fechaFormateada }} · {{ hora(reprogramacion.horaInicio) }} – {{ hora(reprogramacion.horaFin) }}</span>
           @if (reprogramacion.aula) {
             <span class="sep">|</span>
             <span><b>Salón:</b> {{ reprogramacion.aula }}</span>
           }
         </p>
+
+        @if (reprogramacion.motivo) {
+          <p class="motivo-line"><b>Motivo:</b> {{ reprogramacion.motivo }}</p>
+        }
+        @if (reprogramacion.observacionCoordinador) {
+          <p class="obs-line"><b>Observación de Coordinación:</b> {{ reprogramacion.observacionCoordinador }}</p>
+        }
       </div>
 
+      @if (esCoordinador && estaPendiente) {
+        <div class="coord-decision no-print">
+          <div class="decision-field">
+            <label for="obsCoord">Observación / Comentario de Coordinación de Ingeniería</label>
+            <input
+              id="obsCoord"
+              type="text"
+              [(ngModel)]="observacionInput"
+              placeholder="Ej. Aprobado según directiva / Indicar motivo si se rechaza…" />
+          </div>
+          <div class="decision-actions">
+            <button type="button" class="btn btn-success" [disabled]="procesando" (click)="confirmarEnServidor()">
+              {{ procesando ? 'Procesando…' : '✔ Confirmar Oficialmente' }}
+            </button>
+            <button type="button" class="btn btn-danger" [disabled]="procesando" (click)="rechazarEnServidor()">
+              ✖ Rechazar Solicitud
+            </button>
+          </div>
+        </div>
+      }
+
       <div class="matriz">
-        <h3>Matriz de Ocupabilidad Horaria</h3>
-        <div class="leyenda">
-          <span><i class="dot libre"></i> Libre</span>
-          <span><i class="dot ocupado"></i> Clase regular</span>
-          <span><i class="dot nuevo"></i> Reprogramación</span>
+        <div class="matriz-head">
+          <h3>Matriz Semanal (Lunes a Domingo · Bloques Académicos de 45 min)</h3>
+          <div class="leyenda">
+            <span><i class="dot libre"></i> Libre</span>
+            <span><i class="dot ocupado"></i> Clase regular</span>
+            <span><i class="dot nuevo"></i> Reprogramación</span>
+          </div>
         </div>
 
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Hora</th>
+                <th>Bloque Académico</th>
                 @for (d of dias; track d.clave) {
                   <th [class.hoy]="d.clave === diaReprogramacion">{{ d.corto }}</th>
                 }
               </tr>
             </thead>
             <tbody>
-              @for (h of horas; track h) {
+              @for (b of bloques; track b.etiqueta) {
                 <tr>
-                  <td class="hora">{{ etiquetaHora(h) }}</td>
+                  <td class="hora">{{ b.etiqueta }}</td>
                   @for (d of dias; track d.clave) {
-                    <td [class]="'celda ' + estadoCelda(d.clave, h)"></td>
+                    <td [class]="'celda ' + estadoCelda(d.clave, b)"></td>
                   }
                 </tr>
               }
@@ -72,23 +157,42 @@
           </table>
         </div>
       </div>
-    } @else {
-      <div class="vacio">
+
+      <!-- Firmas solo visibles en impresión -->
+      <div class="print-signatures">
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <span>Docente Titular ({{ reprogramacion.docenteCodigo }})</span>
+        </div>
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <span>Coordinación Académica de Ingeniería · UTP</span>
+        </div>
+      </div>
+    } @else if (!cargando) {
+      <div class="vacio no-print">
         <p>Aún no hay una reprogramación registrada en esta sesión.</p>
         @if (puedeCrearNueva) {
-          <a routerLink="/registro-reprogramacion" class="link">Registrar una reprogramación →</a>
+          <a routerLink="/registro-reprogramacion" class="btn btn-primary">Registrar una reprogramación →</a>
         }
       </div>
     }
 
-    <footer class="card-foot">
-      @if (reprogramacion) {
-        <button type="button" class="btn-secondary" (click)="imprimir()">Imprimir Constancia</button>
-      }
-      @if (puedeCrearNueva) {
-        <button type="button" class="btn-azul" (click)="nuevaReprogramacion()">Nueva Reprogramación</button>
-      }
-      <button type="button" class="btn-primary" (click)="aceptar()">Volver a Horarios</button>
+    <footer class="card-foot no-print">
+      <div class="step-footer" style="margin-top: 0; padding-top: 0; border-top: none; width: 100%;">
+        <button type="button" class="btn btn-secondary" (click)="regresar()">← Regresar</button>
+
+        <div class="step-footer-right">
+          @if (reprogramacion) {
+            <button type="button" class="btn btn-secondary" (click)="exportarCsv()">Exportar CSV</button>
+            <button type="button" class="btn btn-secondary" (click)="imprimir()">Imprimir Constancia</button>
+          }
+          @if (puedeCrearNueva) {
+            <button type="button" class="btn btn-sky" (click)="nuevaReprogramacion()">Nueva Reprogramación</button>
+          }
+          <button type="button" class="btn btn-primary" (click)="aceptar()">Finalizar y Volver a Horarios →</button>
+        </div>
+      </div>
     </footer>
   </article>
 </section>

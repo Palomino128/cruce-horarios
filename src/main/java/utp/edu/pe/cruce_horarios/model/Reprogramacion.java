@@ -42,6 +42,15 @@ public class Reprogramacion {
     @Column(name = "estado", length = 30)
     private String estado = "SOLICITADO";
 
+    @Column(name = "motivo", length = 250)
+    private String motivo;
+
+    @Column(name = "observacion_coordinador", length = 250)
+    private String observacionCoordinador;
+
+    @Column(name = "porcentaje_asistencia")
+    private Double porcentajeAsistencia;
+
     public Reprogramacion() {}
 
     public Reprogramacion(String docenteCodigo, String curso, LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
@@ -80,4 +89,13 @@ public class Reprogramacion {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public String getMotivo() { return motivo; }
+    public void setMotivo(String motivo) { this.motivo = motivo; }
+
+    public String getObservacionCoordinador() { return observacionCoordinador; }
+    public void setObservacionCoordinador(String observacionCoordinador) { this.observacionCoordinador = observacionCoordinador; }
+
+    public Double getPorcentajeAsistencia() { return porcentajeAsistencia; }
+    public void setPorcentajeAsistencia(Double porcentajeAsistencia) { this.porcentajeAsistencia = porcentajeAsistencia; }
 }

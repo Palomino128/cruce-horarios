@@ -95,8 +95,8 @@ public class DocenteController {
             String aula1 = AULAS_CATALOGO[base % AULAS_CATALOGO.length];
             String aula2 = AULAS_CATALOGO[(base + 3) % AULAS_CATALOGO.length];
 
-            horarioRepository.save(new Horario(codigo, curso1, dias[base % dias.length], LocalTime.of(8, 0), LocalTime.of(10, 0), aula1));
-            horarioRepository.save(new Horario(codigo, curso2, dias[(base + 1) % dias.length], LocalTime.of(16, 0), LocalTime.of(18, 0), aula2));
+            horarioRepository.save(new Horario(codigo, curso1, dias[base % dias.length], LocalTime.of(8, 45), LocalTime.of(10, 15), aula1));
+            horarioRepository.save(new Horario(codigo, curso2, dias[(base + 1) % dias.length], LocalTime.of(15, 45), LocalTime.of(17, 15), aula2));
         }
 
         return guardado;
