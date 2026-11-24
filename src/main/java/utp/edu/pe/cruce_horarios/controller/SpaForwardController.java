@@ -17,6 +17,7 @@ public class SpaForwardController {
             "/consulta-estudiante",
             "/reprogramacion",
             "/registro-reprogramacion",
+            "/base-horarios",
             "/confirmacion",
             "/gestion"
     })
