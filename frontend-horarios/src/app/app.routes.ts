@@ -9,6 +9,7 @@ import {
   PortalEstudianteComponent
 } from './components/portales/portales.component';
 import { GestionUsuariosComponent } from './components/gestion-usuarios/gestion-usuarios.component';
+import { BasePresencialComponent } from './components/base-presencial/base-presencial.component';
 import { authGuard, roleGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -66,6 +67,12 @@ export const routes: Routes = [
     component: GestionUsuariosComponent,
     canActivate: [authGuard, roleGuard],
     data: { seccion: 'todos', breadcrumb: 'Gestión de Usuarios', roles: ['Coordinador Académico'] }
+  },
+  {
+    path: 'base-horarios',
+    component: BasePresencialComponent,
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Base Presencial (Aforo e Inscritos)' }
   },
 
   // Compatibilidad con enlaces anteriores

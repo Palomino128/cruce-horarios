@@ -7,6 +7,8 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DisponibilidadPresencial, HorarioService, OpcionRecuperacion } from '../../services/horario.service';
 import { DocenteService } from '../../services/docente.service';
+import { HorarioPresencialService } from '../../services/horario-presencial.service';
+import { AulaAforo } from '../../models/horario-presencial.model';
 import { Docente } from '../../models/docente.model';
 import { Horario } from '../../models/horario.model';
 import { Reprogramacion } from '../../models/reprogramacion.model';
@@ -117,6 +119,8 @@ export class RegistroReprogramacionComponent implements OnInit {
   horariosCatalogo: Horario[] = [];
   reprogramacionesCatalogo: Reprogramacion[] = [];
   salonesCatalogo: string[] = [...SALONES_PRINCIPALES_UTP];
+  aulasAforoMap: Record<string, number> = {};
+  aulasExcelSet = new Set<string>();
   horariosDocente: Horario[] = [];
 
   sedeFiltro: ClaveSede = 'TODAS';
@@ -140,6 +144,7 @@ export class RegistroReprogramacionComponent implements OnInit {
   constructor(
     private horarioService: HorarioService,
     private docenteService: DocenteService,
+    private horarioPresencialService: HorarioPresencialService,
     private router: Router,
     private location: Location,
     private cdr: ChangeDetectorRef
@@ -198,8 +203,9 @@ export class RegistroReprogramacionComponent implements OnInit {
     forkJoin({
       docentes: this.docenteService.listar().pipe(catchError(() => of([] as Docente[]))),
       horarios: this.horarioService.listarTodos().pipe(catchError(() => of([] as Horario[]))),
-      reprogramaciones: this.horarioService.listarTodasReprogramaciones().pipe(catchError(() => of([] as Reprogramacion[])))
-    }).subscribe(({ docentes, horarios, reprogramaciones }) => {
+      reprogramaciones: this.horarioService.listarTodasReprogramaciones().pipe(catchError(() => of([] as Reprogramacion[]))),
+      aulasExcel: this.horarioPresencialService.listarAulas().pipe(catchError(() => of([] as AulaAforo[])))
+    }).subscribe(({ docentes, horarios, reprogramaciones, aulasExcel }) => {
       this.docentesCatalogo = docentes.filter(d => !d.codigo.toUpperCase().startsWith('COORD'));
       this.horariosCatalogo = horarios;
       this.reprogramacionesCatalogo = reprogramaciones;
@@ -218,6 +224,20 @@ export class RegistroReprogramacionComponent implements OnInit {
           aulas.add(h.aula.trim().toUpperCase());
         }
       }
+      const aforoMap: Record<string, number> = {};
+      const excelSet = new Set<string>();
+      for (const a of aulasExcel) {
+        if (a.clase?.trim()) {
+          const cod = a.clase.trim().toUpperCase();
+          aulas.add(cod);
+          excelSet.add(cod);
+          if (a.aforo != null) {
+            aforoMap[cod] = a.aforo;
+          }
+        }
+      }
+      this.aulasAforoMap = aforoMap;
+      this.aulasExcelSet = excelSet;
       this.salonesCatalogo = [...aulas].sort();
       this.cargandoCatalogos = false;
 
@@ -228,10 +248,28 @@ export class RegistroReprogramacionComponent implements OnInit {
     });
   }
 
-  // ===== VALIDACIONES VISUALES (Rango horario, Aula/Sede e Intervalo 15 min) =====
+  // ===== VALIDACIONES VISUALES (Rango horario, Aula/Sede, Aforo e Intervalo 15 min) =====
 
   get alertaAula(): string {
-    return validarAulaUtp(this.modelo.aula, false);
+    return validarAulaUtp(this.modelo.aula, false, this.aulasExcelSet);
+  }
+
+  get aforoSalonActual(): number | null {
+    return this.aforoDeSalon(this.modelo.aula);
+  }
+
+  aforoDeSalon(aula?: string | null): number | null {
+    const cod = (aula ?? '').trim().toUpperCase();
+    return cod && this.aulasAforoMap[cod] !== undefined ? this.aulasAforoMap[cod] : null;
+  }
+
+  get alertaCapacidadSalon(): string {
+    const aforo = this.aforoSalonActual;
+    const inscritos = this.disponibilidadPresencial?.totalEstudiantes ?? 0;
+    if (aforo !== null && inscritos > aforo) {
+      return `Capacidad insuficiente en el salón ${(this.modelo.aula ?? '').trim().toUpperCase()}: aforo máximo ${aforo} alumnos, pero el curso tiene ${inscritos} inscritos (INSCRITOS > AFORO).`;
+    }
+    return '';
   }
 
   get infoAulaActual(): string {
@@ -326,6 +364,7 @@ export class RegistroReprogramacionComponent implements OnInit {
       this.modelo.horaInicio &&
       this.modelo.horaFin &&
       !this.alertaAula &&
+      !this.alertaCapacidadSalon &&
       !this.alertaRangoHorario &&
       !this.alertaIntervaloTraslado &&
       this.estado !== 'enviando'

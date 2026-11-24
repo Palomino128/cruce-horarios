@@ -17,40 +17,37 @@ public class HorarioPresencial {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "coordinador_curso", length = 150)
+    @Column(name = "coordinador_curso", length = 150, nullable = true)
     private String coordinadorCurso;
 
-    @Column(name = "cod_docente", length = 20)
+    @Column(name = "cod_docente", length = 30, nullable = true)
     private String codDocente;
 
-    @Column(name = "nom_docente", length = 150)
+    @Column(name = "nom_docente", length = 150, nullable = true)
     private String nomDocente;
 
-    @Column(name = "cod_curso", length = 30)
+    @Column(name = "cod_curso", length = 30, nullable = false)
     private String codCurso;
 
-    @Column(name = "curso", length = 200)
+    @Column(name = "curso", length = 200, nullable = false)
     private String curso;
 
     @Column(name = "catalogo", length = 50)
     private String catalogo;
 
-    @Column(name = "ciclo")
-    private BigDecimal ciclo;
+    @Column(name = "ciclo", length = 20)
+    private String ciclo;
 
     @Column(name = "seccion", length = 30)
     private String seccion;
 
-    @Column(name = "num_clase")
-    private BigDecimal numClase;
-
     @Column(name = "carrera", length = 150)
     private String carrera;
 
-    @Column(name = "modalidad", length = 30)
+    @Column(name = "modalidad", length = 40)
     private String modalidad;
 
-    @Column(name = "tipo_clase", length = 80)
+    @Column(name = "tipo_clase", length = 80, nullable = true)
     private String tipoClase;
 
     @Column(name = "aforo")
@@ -61,9 +58,6 @@ public class HorarioPresencial {
 
     @Column(name = "grado", length = 30)
     private String grado;
-
-    @Column(name = "modulo", length = 50)
-    private String modulo;
 
     @Column(name = "dia_clase", length = 30)
     private String diaClase;
@@ -76,12 +70,6 @@ public class HorarioPresencial {
 
     @Column(name = "horas_prog")
     private BigDecimal horasProg;
-
-    @Column(name = "categoria", length = 50)
-    private String categoria;
-
-    @Column(name = "edificio", length = 50)
-    private String edificio;
 
     @Column(name = "clase", length = 50)
     private String clase;
@@ -112,14 +100,11 @@ public class HorarioPresencial {
     public String getCatalogo() { return catalogo; }
     public void setCatalogo(String catalogo) { this.catalogo = catalogo; }
 
-    public BigDecimal getCiclo() { return ciclo; }
-    public void setCiclo(BigDecimal ciclo) { this.ciclo = ciclo; }
+    public String getCiclo() { return ciclo; }
+    public void setCiclo(String ciclo) { this.ciclo = ciclo; }
 
     public String getSeccion() { return seccion; }
     public void setSeccion(String seccion) { this.seccion = seccion; }
-
-    public BigDecimal getNumClase() { return numClase; }
-    public void setNumClase(BigDecimal numClase) { this.numClase = numClase; }
 
     public String getCarrera() { return carrera; }
     public void setCarrera(String carrera) { this.carrera = carrera; }
@@ -139,9 +124,6 @@ public class HorarioPresencial {
     public String getGrado() { return grado; }
     public void setGrado(String grado) { this.grado = grado; }
 
-    public String getModulo() { return modulo; }
-    public void setModulo(String modulo) { this.modulo = modulo; }
-
     public String getDiaClase() { return diaClase; }
     public void setDiaClase(String diaClase) { this.diaClase = diaClase; }
 
@@ -153,12 +135,6 @@ public class HorarioPresencial {
 
     public BigDecimal getHorasProg() { return horasProg; }
     public void setHorasProg(BigDecimal horasProg) { this.horasProg = horasProg; }
-
-    public String getCategoria() { return categoria; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
-
-    public String getEdificio() { return edificio; }
-    public void setEdificio(String edificio) { this.edificio = edificio; }
 
     public String getClase() { return clase; }
     public void setClase(String clase) { this.clase = clase; }

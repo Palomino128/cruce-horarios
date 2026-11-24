@@ -1,8 +1,10 @@
 package utp.edu.pe.cruce_horarios.service;
 
 import utp.edu.pe.cruce_horarios.model.Horario;
+import utp.edu.pe.cruce_horarios.model.HorarioPresencial;
 import utp.edu.pe.cruce_horarios.model.Matricula;
 import utp.edu.pe.cruce_horarios.model.Reprogramacion;
+import utp.edu.pe.cruce_horarios.repository.HorarioPresencialRepository;
 import utp.edu.pe.cruce_horarios.repository.HorarioRepository;
 import utp.edu.pe.cruce_horarios.repository.MatriculaRepository;
 import utp.edu.pe.cruce_horarios.repository.ReprogramacionRepository;
@@ -46,6 +48,9 @@ public class CruceHorarioService {
 
     @Autowired
     private MatriculaRepository matriculaRepository;
+
+    @Autowired(required = false)
+    private HorarioPresencialRepository horarioPresencialRepository;
 
     public CruceHorarioService() {}
 
@@ -162,9 +167,47 @@ public class CruceHorarioService {
                             + " está ocupado por la recuperación de " + cruceSalonReprog.get());
                 }
             }
+            if (horarioPresencialRepository != null) {
+                String diaEs = diaEnEspanol(nueva.getFecha().getDayOfWeek());
+                List<HorarioPresencial> ocupacionesPresenciales = horarioPresencialRepository
+                        .findByClaseIgnoreCaseAndDiaClaseIgnoreCase(aulaSolicitada, diaEs);
+                for (HorarioPresencial hp : ocupacionesPresenciales) {
+                    if (seSolapan(hp.getHoraInicio(), hp.getHoraFin(), nueva.getHoraInicio(), nueva.getHoraFin())) {
+                        return Optional.of("No se puede reprogramar: el salón " + aulaSolicitada
+                                + " está ocupado en la base presencial el " + diaEs + " por "
+                                + hp.getCurso() + " (Sec. " + hp.getSeccion() + ").");
+                    }
+                }
+                Integer aforoSalon = horarioPresencialRepository.obtenerAforoMaximoDeAula(aulaSolicitada);
+                if (aforoSalon != null && matriculaRepository != null) {
+                    List<Matricula> inscritosCurso = matriculaRepository.findByCurso(nueva.getCurso());
+                    int totalInscritos = inscritosCurso == null ? 0 : (int) inscritosCurso.stream()
+                            .map(Matricula::getEstudianteCodigo)
+                            .filter(c -> c != null && !c.isBlank())
+                            .distinct()
+                            .count();
+                    if (totalInscritos > aforoSalon) {
+                        return Optional.of("Capacidad insuficiente en el salón " + aulaSolicitada
+                                + ": tiene aforo máximo de " + aforoSalon + " alumnos, pero el curso tiene "
+                                + totalInscritos + " inscritos (INSCRITOS > AFORO).");
+                    }
+                }
+            }
         }
 
         return Optional.empty();
+    }
+
+    private String diaEnEspanol(DayOfWeek dia) {
+        return switch (dia) {
+            case MONDAY -> "Lunes";
+            case TUESDAY -> "Martes";
+            case WEDNESDAY -> "Miercoles";
+            case THURSDAY -> "Jueves";
+            case FRIDAY -> "Viernes";
+            case SATURDAY -> "Sabado";
+            case SUNDAY -> "Domingo";
+        };
     }
 
     public Optional<String> validarHorarioRegular(Horario h) {
@@ -242,6 +285,9 @@ public class CruceHorarioService {
             return Optional.empty();
         }
         String clean = aula.trim().toUpperCase();
+        if (horarioPresencialRepository != null && !horarioPresencialRepository.findByClaseIgnoreCase(clean).isEmpty()) {
+            return Optional.empty();
+        }
         char pab = clean.charAt(0);
         if (pab == 'A' || pab == 'B') {
             if (PATTERN_TACNA_ARICA.matcher(clean).matches()) {

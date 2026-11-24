@@ -108,12 +108,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
       return [
         { ruta: '/consulta-horario', texto: 'MI HORARIO Y SALONES' },
         { ruta: '/registro-reprogramacion', texto: 'REPROGRAMACIÓN (LUN–DOM)' },
+        { ruta: '/base-horarios', texto: 'BASE PRESENCIAL (AFORO)' },
         { ruta: '/confirmacion', texto: 'CONFIRMACIÓN' }
       ];
     }
     return [
       { ruta: '/consulta-horario', texto: 'CONSULTA DE HORARIO' },
       { ruta: '/registro-reprogramacion', texto: 'REPROGRAMACIÓN' },
+      { ruta: '/base-horarios', texto: 'BASE PRESENCIAL (AFORO)' },
       { ruta: '/confirmacion', texto: 'CONFIRMACIÓN' },
       { ruta: '/gestion', texto: 'GESTIÓN DE USUARIOS' }
     ];
@@ -131,6 +133,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     if (url.startsWith('/gestion')) {
       items.push({ label: 'Gestión de Usuarios', ruta: '/gestion', activo: true });
+      return items;
+    }
+
+    if (url.startsWith('/base-horarios')) {
+      items.push({ label: 'Base Presencial (Aforo e Inscritos)', ruta: '/base-horarios', activo: true });
       return items;
     }
 

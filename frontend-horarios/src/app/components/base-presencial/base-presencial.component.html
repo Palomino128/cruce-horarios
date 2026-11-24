@@ -1,0 +1,238 @@
+<section class="base-presencial">
+  <div class="page-head">
+    <span class="page-kicker">BASE DE DATOS ACADÉMICA IMPORTADA · DATA (25).XLSX (HOJA EXPORT)</span>
+    <h2>Horarios Presenciales, Aforo de Salones e Inscritos</h2>
+    <p>
+      Consulta los <strong>{{ totalRegistros }}</strong> registros completos con códigos de aula limpios (<code>CLASE</code> sin los 2 dígitos iniciales), capacidad máxima (<code>AFORO</code>) y alumnos matriculados (<code>INSCRITOS</code>), con validación de cruce y capacidad.
+    </p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <article class="card kpi-card">
+      <span class="kpi-lbl">REGISTROS VÁLIDOS CARGADOS</span>
+      <strong class="kpi-val">{{ totalRegistros }}</strong>
+      <span class="kpi-sub">19 columnas conservadas (2 filas pie descartadas)</span>
+    </article>
+
+    <article class="card kpi-card kpi-sky">
+      <span class="kpi-lbl">SALONES LIMPIOS ÚNICOS (CLASE)</span>
+      <strong class="kpi-val">{{ totalAulas }}</strong>
+      <span class="kpi-sub">Ej. A0102, A0111, GS0104, J0202</span>
+    </article>
+
+    <article class="card kpi-card kpi-warn">
+      <span class="kpi-lbl">CLASES CON SOBRECUPO (INSCRITOS &gt; AFORO)</span>
+      <strong class="kpi-val">{{ totalSobrecupo }}</strong>
+      <span class="kpi-sub">Alertadas automáticamente en la tabla</span>
+    </article>
+  </div>
+
+  <!-- VALIDADOR DE AULA Y CAPACIDAD -->
+  <article class="card validator-card">
+    <header class="card-head head-sky">
+      <div>
+        <h3>Validador de Disponibilidad de Salón y Capacidad (INSCRITOS ≤ AFORO)</h3>
+        <span class="card-sub">Verifica en tiempo real contra los {{ totalRegistros }} horarios si el salón está libre y soporta la cantidad de alumnos</span>
+      </div>
+    </header>
+
+    <form class="validator-form" (ngSubmit)="validarCapacidadYDisponibilidad()">
+      <div class="field">
+        <label for="valClase">Salón (CLASE limpia)</label>
+        <input id="valClase" name="valClase" type="text" list="aulasExcelList" [(ngModel)]="valClase" placeholder="ej. A0102" required />
+        <datalist id="aulasExcelList">
+          @for (a of aulasCatalogo; track a.clase) {
+            <option [value]="a.clase">{{ a.clase }} — Aforo: {{ a.aforo ?? '—' }}</option>
+          }
+        </datalist>
+      </div>
+
+      <div class="field">
+        <label for="valDia">Día (DIA_CLASE)</label>
+        <select id="valDia" name="valDia" [(ngModel)]="valDia">
+          @for (d of dias; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="valIni">Hora Inicio</label>
+        <input id="valIni" name="valIni" type="time" [(ngModel)]="valHoraInicio" required />
+      </div>
+
+      <div class="field">
+        <label for="valFin">Hora Fin</label>
+        <input id="valFin" name="valFin" type="time" [(ngModel)]="valHoraFin" required />
+      </div>
+
+      <div class="field">
+        <label for="valInsc">Inscritos (Alumnos)</label>
+        <input id="valInsc" name="valInsc" type="number" min="0" max="200" [(ngModel)]="valInscritos" required />
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="validando">
+        {{ validando ? 'Validando…' : 'Validar Salón y Aforo' }}
+      </button>
+    </form>
+
+    @if (resultadoValidacion; as res) {
+      <div class="val-result" [class.val-ok]="res.valido" [class.val-err]="!res.valido">
+        <div class="val-top">
+          <strong>{{ res.valido ? '✔ Salón Disponible y Aforo Suficiente' : '⚠ Alerta de Disponibilidad o Capacidad' }}</strong>
+          <div class="val-badges">
+            <span class="badge" [class.badge-success]="res.aulaDisponible" [class.badge-danger]="!res.aulaDisponible">
+              {{ res.aulaDisponible ? 'Salón Libre' : 'Salón Ocupado' }}
+            </span>
+            <span class="badge" [class.badge-success]="res.capacidadSuficiente" [class.badge-danger]="!res.capacidadSuficiente">
+              Aforo: {{ res.aforoAula ?? 'N/D' }} · Inscritos: {{ res.inscritosSolicitados ?? 0 }}
+            </span>
+          </div>
+        </div>
+        <p>{{ res.mensaje }}</p>
+
+        @if (res.conflictos.length) {
+          <div class="conflict-list">
+            <strong>Clases ocupando {{ res.clase }} en esta franja:</strong>
+            <ul>
+              @for (c of res.conflictos; track $index) {
+                <li><code>{{ c.codCurso }}</code> {{ c.curso }} (Sec. {{ c.seccion }}) · {{ c.horaInicio }}–{{ c.horaFin }} · {{ c.inscritos }}/{{ c.aforo }} alumnos</li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (!res.valido && res.aulasSugeridas.length) {
+          <div class="sug-aulas">
+            <strong>Salones libres con aforo ≥ {{ res.inscritosSolicitados }} en esta franja:</strong>
+            <div class="chip-row">
+              @for (sug of res.aulasSugeridas; track sug.clase) {
+                <button type="button" class="aula-chip" (click)="usarAulaSugerida(sug)">
+                  ✔ {{ sug.clase }} (Aforo {{ sug.aforo }})
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </article>
+
+  <!-- FILTROS Y TABLA PAGINADA -->
+  <article class="card table-card">
+    <header class="card-head">
+      <div>
+        <h3>Catálogo Completo de Horarios Presenciales ({{ totalElements }} encontrados)</h3>
+        <span class="card-sub">Campos de la hoja Export sin NUM_CLASE, MODULO, EDIFICIO ni CATEGORIA</span>
+      </div>
+
+      <div class="filter-controls">
+        <input
+          type="text"
+          [(ngModel)]="q"
+          (keyup.enter)="buscar(true)"
+          placeholder="Buscar código, curso, carrera, sección o aula…" />
+        <select [(ngModel)]="diaFiltro" (ngModelChange)="buscar(true)">
+          <option value="">Todos los días</option>
+          @for (d of dias; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+        <label class="chk-sobrecupo">
+          <input type="checkbox" [(ngModel)]="soloSobrecupo" (ngModelChange)="buscar(true)" />
+          Solo sobrecupo
+        </label>
+        <button type="button" class="btn btn-sky btn-sm" (click)="buscar(true)">Buscar</button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">Limpiar</button>
+      </div>
+    </header>
+
+    @if (error) {
+      <div class="toast-banner toast-danger" role="alert">{{ error }}</div>
+    }
+
+    @if (cargando) {
+      <div class="loading-state">
+        <span class="spinner"></span>
+        <span>Consultando base presencial…</span>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>COD_CURSO</th>
+              <th>CURSO / CATÁLOGO</th>
+              <th>CICLO / SEC.</th>
+              <th>CARRERA / GRADO</th>
+              <th>MODALIDAD / TIPO</th>
+              <th>DÍA Y HORARIO</th>
+              <th>CLASE (AULA)</th>
+              <th>INSCRITOS / AFORO</th>
+              <th>ACCIÓN</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of registros; track h.id) {
+              <tr [class.row-overcap]="tieneSobrecupo(h)">
+                <td><span class="badge badge-navy">{{ h.codCurso }}</span></td>
+                <td>
+                  <div class="curso-main">{{ h.curso }}</div>
+                  <small class="sub-txt">{{ h.catalogo || '—' }} · {{ h.horasProg ?? '—' }} h prog.</small>
+                </td>
+                <td>
+                  <div>Ciclo {{ h.ciclo || '—' }}</div>
+                  <small class="sub-txt">Sec. {{ h.seccion || '—' }}</small>
+                </td>
+                <td>
+                  <div>{{ h.carrera || '—' }}</div>
+                  <small class="sub-txt">{{ h.grado || '—' }}</small>
+                </td>
+                <td>
+                  <div>{{ h.modalidad || '—' }}</div>
+                  <small class="sub-txt">{{ h.tipoClase || 'Sin tipo' }}</small>
+                </td>
+                <td class="nowrap">
+                  <strong>{{ h.diaClase }}</strong>
+                  <div class="sub-txt">{{ hora(h.horaInicio) }} – {{ hora(h.horaFin) }}</div>
+                </td>
+                <td>
+                  <div class="aula-box">
+                    <span class="badge badge-info">{{ h.clase || '—' }}</span>
+                    <small class="sub-txt" [class.is-sub]="esSubterranea(h.clase)">{{ ubicacionAula(h.clase) }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div class="cap-box">
+                    <div class="cap-nums">
+                      <strong>{{ h.inscritos ?? 0 }} / {{ h.aforo ?? 0 }}</strong>
+                      @if (tieneSobrecupo(h)) {
+                        <span class="badge badge-danger">SOBRECUPO</span>
+                      }
+                    </div>
+                    <div class="cap-bar">
+                      <div class="cap-fill" [class.over]="tieneSobrecupo(h)" [style.width.%]="porcentajeOcupacion(h)"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <button type="button" class="btn-mini" (click)="cargarEnValidador(h)">Validar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-bar">
+        <span>Mostrando {{ registros.length }} de {{ totalElements }} registros</span>
+        <div class="pagination-controls">
+          <button type="button" class="page-btn" [disabled]="page <= 0" (click)="cambiarPagina(-1)">← Anterior</button>
+          <span class="page-indicator">Página {{ page + 1 }} de {{ totalPages }}</span>
+          <button type="button" class="page-btn" [disabled]="page + 1 >= totalPages" (click)="cambiarPagina(1)">Siguiente →</button>
+        </div>
+      </div>
+    }
+  </article>
+</section>

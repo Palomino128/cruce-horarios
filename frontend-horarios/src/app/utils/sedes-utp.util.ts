@@ -54,10 +54,14 @@ const RE_TACNA = /^[AB](S1\d{2}|[1-9]\d{2})$/;
 const RE_PARRA_1 = /^[C-G](S[12]\d{2}|[1-9]\d{2})$/;
 const RE_PARRA_2 = /^[HI](S[12]\d{2}|[1-9]\d{2})$/;
 
-export function validarAulaUtp(aula?: string | null, obligatorio = false): string {
+export function validarAulaUtp(aula?: string | null, obligatorio = false, aulasCatalogo?: Set<string>): string {
   const clean = (aula ?? '').trim().toUpperCase();
   if (!clean) {
-    return obligatorio ? 'Ingrese el código del aula (ej. A101, AS101, CS201, HS201).' : '';
+    return obligatorio ? 'Ingrese el código del aula (ej. A101, AS101, A0102, GS0104).' : '';
+  }
+
+  if (aulasCatalogo && aulasCatalogo.has(clean)) {
+    return '';
   }
 
   const pab = clean[0];
@@ -117,10 +121,13 @@ export function obtenerInfoAula(aula?: string | null): InfoAula {
     claveSede = 'PARRA_2';
   }
 
-  const esSub = clean.length >= 3 && clean[1] === 'S' && /\d/.test(clean[2]);
+  const esSub = (clean.length >= 3 && clean[1] === 'S' && /\d/.test(clean[2]));
   let pisoEtiqueta = '';
   if (esSub) {
-    pisoEtiqueta = `Sótano -${clean[2]}`;
+    const pisoNum = clean.length >= 5 && clean[2] === '0' && /\d/.test(clean[3]) ? clean[3] : clean[2];
+    pisoEtiqueta = `Sótano -${pisoNum}`;
+  } else if (clean.length >= 5 && clean[1] === '0' && /[1-9]/.test(clean[2])) {
+    pisoEtiqueta = `Piso ${clean[2]}`;
   } else if (clean.length >= 2 && /[1-9]/.test(clean[1])) {
     pisoEtiqueta = `Piso ${clean[1]}`;
   }

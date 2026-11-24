@@ -30,7 +30,7 @@ public class NeonSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(NeonSyncService.class);
     private static final Set<String> TABLAS_VALIDAS = Set.of(
-            "docentes", "estudiantes", "horarios", "matriculas", "reprogramaciones"
+            "docentes", "estudiantes", "horarios", "matriculas", "reprogramaciones", "horarios_presenciales"
     );
 
     private final boolean syncEnabled;
@@ -114,6 +114,32 @@ public class NeonSyncService {
         ejecutar("ALTER TABLE reprogramaciones ADD COLUMN IF NOT EXISTS motivo VARCHAR(250)", List.of());
         ejecutar("ALTER TABLE reprogramaciones ADD COLUMN IF NOT EXISTS observacion_coordinador VARCHAR(250)", List.of());
         ejecutar("ALTER TABLE reprogramaciones ADD COLUMN IF NOT EXISTS porcentaje_asistencia DOUBLE PRECISION", List.of());
+
+        ejecutar("""
+                CREATE TABLE IF NOT EXISTS horarios_presenciales (
+                    id SERIAL PRIMARY KEY,
+                    coordinador_curso VARCHAR(150) NULL,
+                    cod_docente VARCHAR(30) NULL,
+                    nom_docente VARCHAR(150) NULL,
+                    cod_curso VARCHAR(30) NOT NULL,
+                    curso VARCHAR(200) NOT NULL,
+                    catalogo VARCHAR(50),
+                    ciclo VARCHAR(20),
+                    seccion VARCHAR(30),
+                    carrera VARCHAR(150),
+                    modalidad VARCHAR(40),
+                    tipo_clase VARCHAR(80) NULL,
+                    aforo INTEGER,
+                    inscritos INTEGER,
+                    grado VARCHAR(30),
+                    dia_clase VARCHAR(30),
+                    hora_inicio TIME,
+                    hora_fin TIME,
+                    horas_prog NUMERIC(6, 2),
+                    clase VARCHAR(50),
+                    tiempo_traslado_min INTEGER DEFAULT 15
+                )
+                """, List.of());
 
         log.info("Esquema online verificado en Neon PostgreSQL ({}).",
                 enmascararCredenciales(neonConnectionString));

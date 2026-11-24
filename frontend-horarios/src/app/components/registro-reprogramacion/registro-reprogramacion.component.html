@@ -1,542 +1,572 @@
-<section class="registro">
+BBV <section class="registro">
   <div class="page-head">
     <span class="page-kicker">REPROGRAMACIÓN Y VERIFICACIÓN DE DISPONIBILIDAD</span>
     <h2>Registrar Reprogramación / Recuperación de Clase</h2>
-    <p>El sistema evalúa qué porcentaje de los estudiantes matriculados puede asistir a la recuperación y recomienda fechas y horarios con asistencia mayor al 50%, mostrando todas las opciones disponibles.</p>
+    <p>El sistema evalúa qué porcentaje de los estudiantes matriculados puede asistir a la recuperación y recomienda
+      fechas y horarios con asistencia mayor al 50%, mostrando todas las opciones disponibles.</p>
   </div>
 
   @if (esSoloEstudiante) {
-    <div class="toast-banner toast-danger">
-      <div>
-        <strong>Acceso restringido</strong>
-        Solo los docentes o coordinadores académicos pueden registrar reprogramaciones de clase.
-      </div>
+  <div class="toast-banner toast-danger">
+    <div>
+      <strong>Acceso restringido</strong>
+      Solo los docentes o coordinadores académicos pueden registrar reprogramaciones de clase.
     </div>
+  </div>
   } @else {
-    <div class="layout">
-      <!-- Columna izquierda -->
-      <aside class="col-left">
-        <article class="card rules-card">
-          <header class="card-head">
-            <div>
-              <h3>Reglas de Recuperación</h3>
-              <span class="card-sub">Directiva Académica UTP</span>
-            </div>
-          </header>
-          <ol>
-            @for (r of reglas; track $index) {
-              <li>{{ r }}</li>
-            }
-          </ol>
-        </article>
-
-        <article class="card day-card">
-          <header class="card-head head-sky">
-            <h3>CARGA DEL DÍA</h3>
-            <span class="day-pill">{{ diaSeleccionadoEs }}</span>
-          </header>
-
-          @if (!modelo.docenteCodigo || !modelo.fecha) {
-            <p class="empty">Ingrese el código del docente y la fecha para ver su carga del día.</p>
-          } @else if (cargaDelDia.length) {
-            <ul class="day-list">
-              @for (h of cargaDelDia; track $index) {
-                <li>
-                  <span class="time">{{ hora(h.horaInicio) }} – {{ hora(h.horaFin) }}</span>
-                  <span class="course">{{ h.curso }}</span>
-                  <span class="meta">{{ h.docenteCodigo }} · Salón {{ h.aula || 'Por asignar' }} ({{ ubicacionAulaCorta(h.aula) }})</span>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="empty ok">✔ Sin clases regulares ese día: horario docente disponible.</p>
-          }
-        </article>
-      </aside>
-
-      <!-- Columna derecha -->
-      <article class="card form-card">
+  <div class="layout">
+    <!-- Columna izquierda -->
+    <aside class="col-left">
+      <article class="card rules-card">
         <header class="card-head">
           <div>
-            <h3>Datos de la Reprogramación y Porcentaje de Asistencia</h3>
-            <span class="card-sub">Los alumnos matriculados ya están inscritos · Recomendación automática &gt; 50%</span>
+            <h3>Reglas de Recuperación</h3>
+            <span class="card-sub">Directiva Académica UTP</span>
           </div>
-          @if (cargandoCatalogos) {
-            <span class="badge badge-info">Sincronizando…</span>
+        </header>
+        <ol>
+          @for (r of reglas; track $index) {
+          <li>{{ r }}</li>
           }
+        </ol>
+      </article>
+
+      <article class="card day-card">
+        <header class="card-head head-sky">
+          <h3>CARGA DEL DÍA</h3>
+          <span class="day-pill">{{ diaSeleccionadoEs }}</span>
         </header>
 
-        <form #f="ngForm" (ngSubmit)="guardar(f)" novalidate>
-          <div class="grid">
-            <div class="field">
-              <label for="docenteCodigo">Código Docente</label>
-              <input id="docenteCodigo" name="docenteCodigo" type="text" placeholder="DOC-101" required
-                     [attr.list]="esDocenteEnSesion ? null : 'docentesCatalogo'"
-                     [readonly]="esDocenteEnSesion"
-                     autocomplete="off"
-                     [(ngModel)]="modelo.docenteCodigo" (ngModelChange)="onDocenteChange()"
-                     (blur)="cargarHorariosDocente()" #doc="ngModel" />
-              <datalist id="docentesCatalogo">
-                @for (d of docentesCatalogo; track d.codigo) {
-                  <option [value]="d.codigo">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</option>
-                }
-              </datalist>
-              @if (docenteSeleccionado; as d) {
-                <small class="hint-docente">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</small>
-              }
-              @if (doc.invalid && doc.touched) {
-                <small class="err">El código del docente es obligatorio.</small>
-              }
-            </div>
-
-            <div class="field">
-              <label for="curso">Curso</label>
-              @if (esDocenteEnSesion && cursosSugeridos.length) {
-                <select id="curso" name="curso" required [(ngModel)]="modelo.curso" (ngModelChange)="onCursoChange()">
-                  @for (h of cursosSugeridos; track h.curso) {
-                    <option [value]="h.curso">
-                      {{ h.curso }} ({{ diaEs(h.dia) }} {{ hora(h.horaInicio) }}–{{ hora(h.horaFin) }} · Salón {{ h.aula }})
-                    </option>
-                  }
-                </select>
-              } @else {
-                <input id="curso" name="curso" type="text" placeholder="Desarrollo Web Integrado" required
-                       list="cursosDocente" autocomplete="off"
-                       [(ngModel)]="modelo.curso" (ngModelChange)="onCursoChange()" />
-                <datalist id="cursosDocente">
-                  @for (h of cursosSugeridos; track h.curso) {
-                    <option [value]="h.curso">
-                      {{ h.docenteCodigo }} — {{ nombreDocente(h.docenteCodigo) }} ({{ diaEs(h.dia) }} {{ hora(h.horaInicio) }}–{{ hora(h.horaFin) }})
-                    </option>
-                  }
-                </datalist>
-              }
-              @if (cursoSeleccionadoInfo; as info) {
-                <small class="hint-docente">Titular: {{ info.docenteCodigo }} — {{ nombreDocente(info.docenteCodigo) }} · Salón habitual: {{ info.aula }}</small>
-              }
-              @if (f.controls['curso']?.invalid && f.controls['curso']?.touched) {
-                <small class="err">El curso es obligatorio.</small>
-              }
-            </div>
-
-            <div class="field">
-              <label for="fecha">Nueva Fecha</label>
-              <input id="fecha" name="fecha" type="date" required [(ngModel)]="modelo.fecha" (ngModelChange)="guardarBorrador()" #fec="ngModel" />
-              @if (fec.invalid && fec.touched) {
-                <small class="err">Seleccione la fecha.</small>
-              }
-            </div>
-
-            <div class="field-pair">
-              <div class="field">
-                <label for="horaInicio">Hora Inicio</label>
-                <input id="horaInicio" name="horaInicio" type="time" required [(ngModel)]="modelo.horaInicio" (ngModelChange)="guardarBorrador()" #hi="ngModel" />
-                @if (hi.invalid && hi.touched) {
-                  <small class="err">Obligatoria.</small>
-                }
-              </div>
-              <div class="field">
-                <label for="horaFin">Hora Fin</label>
-                <input id="horaFin" name="horaFin" type="time" required [(ngModel)]="modelo.horaFin" (ngModelChange)="guardarBorrador()" #hf="ngModel" />
-                @if (hf.invalid && hf.touched) {
-                  <small class="err">Obligatoria.</small>
-                }
-              </div>
-            </div>
-
-            <div class="field">
-              <label for="aula">Salón / Aula (ej. A101, AS101, CS201, HS201 — S = Sótano)</label>
-              <input id="aula" name="aula" type="text" maxlength="5" placeholder="Automático o ej. AS101, HS201"
-                     list="salonesList" autocomplete="off" [(ngModel)]="modelo.aula" (ngModelChange)="guardarBorrador()" />
-              <datalist id="salonesList">
-                @for (s of salonesCatalogo; track s) {
-                  <option [value]="s">Salón {{ s }} · {{ ubicacionAula(s) }}</option>
-                }
-              </datalist>
-              @if (infoAulaActual) {
-                <small class="hint-docente">{{ infoAulaActual }}</small>
-              }
-            </div>
-
-            <div class="field">
-              <label for="motivo">Motivo de Reprogramación</label>
-              <select id="motivo" name="motivo" [(ngModel)]="modelo.motivo" (ngModelChange)="guardarBorrador()">
-                @for (m of motivosCatalogo; track m) {
-                  <option [value]="m">{{ m }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <!-- ALERTAS VISUALES EN VIVO (Rango horario, Aula/Sede e Intervalo de traslado 15 min) -->
-          <div class="alerts-stack">
-            @if (alertaAula) {
-              <div class="toast-banner toast-danger" role="alert">
-                <div>
-                  <strong>Aula o Sede UTP inválida</strong>
-                  {{ alertaAula }}
-                </div>
-                <span class="badge badge-danger">SEDE / SÓTANO</span>
-              </div>
-            }
-
-            @if (alertaRangoHorario) {
-              <div class="toast-banner toast-danger" role="alert">
-                <div>
-                  <strong>Horario inválido</strong>
-                  {{ alertaRangoHorario }}
-                </div>
-                <span class="badge badge-danger">HORARIO</span>
-              </div>
-            }
-
-            @if (alertaIntervaloTraslado) {
-              <div class="toast-banner toast-danger" role="alert">
-                <div>
-                  <strong>⚠ Regla de Traslado Docente (Mínimo 15 minutos)</strong>
-                  {{ alertaIntervaloTraslado }}
-                </div>
-                <span class="badge badge-danger">TRASLADO</span>
-              </div>
-            }
-          </div>
-
-          <!-- RESULTADO DE VERIFICAR DISPONIBILIDAD (PORCENTAJE DE ASISTENCIA) -->
-          @if (verificandoDisponibilidad) {
-            <div class="loading-state">
-              <span class="spinner"></span>
-              <span>Calculando porcentaje de asistencia de los alumnos matriculados…</span>
-            </div>
+        @if (!modelo.docenteCodigo || !modelo.fecha) {
+        <p class="empty">Ingrese el código del docente y la fecha para ver su carga del día.</p>
+        } @else if (cargaDelDia.length) {
+        <ul class="day-list">
+          @for (h of cargaDelDia; track $index) {
+          <li>
+            <span class="time">{{ hora(h.horaInicio) }} – {{ hora(h.horaFin) }}</span>
+            <span class="course">{{ h.curso }}</span>
+            <span class="meta">{{ h.docenteCodigo }} · Salón {{ h.aula || 'Por asignar' }} ({{
+              ubicacionAulaCorta(h.aula) }})</span>
+          </li>
           }
-
-          @if (errorDisponibilidad) {
-            <div class="toast-banner toast-danger" role="alert">
-              <div>
-                <strong>Error al verificar disponibilidad</strong>
-                {{ errorDisponibilidad }}
-              </div>
-            </div>
-          }
-
-          @if (disponibilidadPresencial; as disp) {
-            <div class="disp-card" [class.disp-low]="disp.porcentajeAsistencia <= 50">
-              <div class="disp-head">
-                <strong>Asistencia Estimada de Alumnos Matriculados</strong>
-                @if (disp.porcentajeAsistencia > 50) {
-                  <span class="badge badge-success">✔ Recomendada ({{ disp.porcentajeAsistencia }}% &gt; 50%)</span>
-                } @else {
-                  <span class="badge badge-warning">⚠ Asistencia baja ({{ disp.porcentajeAsistencia }}% ≤ 50%)</span>
-                }
-              </div>
-
-              <div class="pct-bar-wrap">
-                <div class="pct-bar" [class.low]="disp.porcentajeAsistencia <= 50" [style.width.%]="disp.porcentajeAsistencia"></div>
-              </div>
-
-              <p class="disp-note">
-                @if (disp.porcentajeAsistencia > 50) {
-                  El <strong>{{ disp.porcentajeAsistencia }}%</strong> de los alumnos matriculados puede asistir en esta fecha y hora. Opción recomendada por el sistema.
-                } @else {
-                  Solo el <strong>{{ disp.porcentajeAsistencia }}%</strong> de los alumnos matriculados puede asistir (≤ 50%). Puedes revisar las fechas recomendadas debajo o continuar si deseas elegir esta opción.
-                }
-              </p>
-
-              @if (disp.estudiantesConCruce.length) {
-                <p class="disp-cruces">
-                  Códigos con cruce en esta franja: <code>{{ disp.estudiantesConCruce.join(', ') }}</code>
-                </p>
-              }
-            </div>
-          }
-
-          <!-- Disponibilidad de salones en vivo -->
-          @if (tieneFechaYFranja && !alertaRangoHorario) {
-            <div class="live-salones">
-              <div class="live-group">
-                <strong>✔ Salones Disponibles para {{ diaSeleccionadoEs }} {{ hora(modelo.horaInicio) }}–{{ hora(modelo.horaFin) }}:</strong>
-                <div class="chip-wrap">
-                  @for (s of salonesDisponiblesEnFranja.slice(0, 14); track s) {
-                    <button type="button" class="salon-chip ok" [class.active]="modelo.aula?.toUpperCase() === s" (click)="seleccionarSalon(s)">
-                      ✔ {{ s }} · {{ ubicacionAulaCorta(s) }}
-                    </button>
-                  }
-                  @if (salonesDisponiblesEnFranja.length > 14) {
-                    <span class="more-info">+{{ salonesDisponiblesEnFranja.length - 14 }} salones más</span>
-                  }
-                </div>
-              </div>
-
-              @if (salonesOcupadosEnFranja.length) {
-                <div class="live-group">
-                  <strong>✖ Salones No Disponibles:</strong>
-                  <div class="chip-wrap">
-                    @for (o of salonesOcupadosEnFranja; track $index) {
-                      <span class="salon-chip busy">✖ {{ o.aula }} ({{ ubicacionAulaCorta(o.aula) }}) · {{ o.curso }} ({{ o.docenteCodigo }})</span>
-                    }
-                  </div>
-                </div>
-              } @else {
-                <p class="all-free">Todos los salones se encuentran libres en esta franja horaria.</p>
-              }
-            </div>
-          }
-
-          @if (estado === 'ok') {
-            <div class="toast-banner toast-success" role="status">
-              <div>
-                <strong>✔ {{ mensaje }}</strong>
-                {{ modelo.docenteCodigo }} · {{ modelo.curso }} · {{ modelo.fecha }} {{ hora(modelo.horaInicio) }}–{{ hora(modelo.horaFin) }} {{ modelo.aula ? '· Salón ' + modelo.aula + ' (' + ubicacionAulaCorta(modelo.aula) + ')' : '' }}
-              </div>
-              <button type="button" class="btn btn-success" (click)="irAConfirmacion()">Ir a Confirmación →</button>
-            </div>
-          }
-
-          @if (estado === 'conflicto') {
-            <div class="toast-banner toast-danger" role="alert">
-              <div>
-                <strong>✖ Conflicto de horario o salón detectado (HTTP 400)</strong>
-                {{ mensaje }}
-              </div>
-              <span class="badge badge-danger">ERR-400</span>
-            </div>
-          }
-
-          @if (estado === 'error') {
-            <div class="toast-banner toast-danger" role="alert">
-              <div>
-                <strong>Error de comunicación</strong>
-                {{ mensaje }}
-              </div>
-            </div>
-          }
-
-          <!-- PIE DE FORMULARIO -->
-          <div class="step-footer">
-            <button type="button" class="btn btn-secondary" (click)="regresar()">← Regresar</button>
-
-            <div class="step-footer-right">
-              <button type="button" class="btn btn-secondary" (click)="limpiar(f)">Limpiar</button>
-              <button
-                type="button"
-                class="btn btn-sky"
-                [disabled]="!puedeVerificarDisponibilidad"
-                (click)="verificarDisponibilidad()">
-                {{ verificandoDisponibilidad ? 'Calculando…' : 'Verificar % Asistencia' }}
-              </button>
-              <button type="submit" class="btn btn-primary" [disabled]="!formularioListoParaGuardar">
-                {{ estado === 'enviando' ? 'Registrando…' : 'Registrar Reprogramación →' }}
-              </button>
-            </div>
-          </div>
-        </form>
+        </ul>
+        } @else {
+        <p class="empty ok">✔ Sin clases regulares ese día: horario docente disponible.</p>
+        }
       </article>
-    </div>
+    </aside>
 
-    <!-- RECOMENDACIONES DE FECHA Y HORA (TODAS LAS OPCIONES VISIBLES: >50% Y <=50%) -->
-    <article class="card reco-card">
-      <header class="card-head head-sky">
+    <!-- Columna derecha -->
+    <article class="card form-card">
+      <header class="card-head">
         <div>
-          <h3>Opciones de Fecha y Hora para Recuperar la Clase (% de Asistencia)</h3>
-          <span class="card-sub">Se recomiendan las opciones con asistencia &gt; 50%, pero se muestran todas las alternativas (altas y bajas).</span>
+          <h3>Datos de la Reprogramación y Porcentaje de Asistencia</h3>
+          <span class="card-sub">Los alumnos matriculados ya están inscritos · Recomendación automática &gt; 50%</span>
         </div>
-        <div class="reco-tabs">
-          <button type="button" class="tab-btn" [class.active]="filtroRecomendacion === 'TODAS'" (click)="cambiarFiltroRecomendacion('TODAS')">
-            Todas
-          </button>
-          <button type="button" class="tab-btn" [class.active]="filtroRecomendacion === 'RECOMENDADAS'" (click)="cambiarFiltroRecomendacion('RECOMENDADAS')">
-            Recomendadas (&gt; 50%)
-          </button>
-          <button type="button" class="tab-btn" [class.active]="filtroRecomendacion === 'BAJAS'" (click)="cambiarFiltroRecomendacion('BAJAS')">
-            Asistencia ≤ 50%
-          </button>
-          <button type="button" class="tab-btn" (click)="cargarRecomendaciones()" [disabled]="cargandoRecomendaciones || !modelo.docenteCodigo || !modelo.curso">
-            {{ cargandoRecomendaciones ? 'Evaluando…' : 'Actualizar' }}
-          </button>
-        </div>
+        @if (cargandoCatalogos) {
+        <span class="badge badge-info">Sincronizando…</span>
+        }
       </header>
 
-      @if (cargandoRecomendaciones) {
+      <form #f="ngForm" (ngSubmit)="guardar(f)" novalidate>
+        <div class="grid">
+          <div class="field">
+            <label for="docenteCodigo">Código Docente</label>
+            <input id="docenteCodigo" name="docenteCodigo" type="text" placeholder="DOC-101" required
+              [attr.list]="esDocenteEnSesion ? null : 'docentesCatalogo'" [readonly]="esDocenteEnSesion"
+              autocomplete="off" [(ngModel)]="modelo.docenteCodigo" (ngModelChange)="onDocenteChange()"
+              (blur)="cargarHorariosDocente()" #doc="ngModel" />
+            <datalist id="docentesCatalogo">
+              @for (d of docentesCatalogo; track d.codigo) {
+              <option [value]="d.codigo">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</option>
+              }
+            </datalist>
+            @if (docenteSeleccionado; as d) {
+            <small class="hint-docente">{{ d.codigo }} — {{ d.nombres }} {{ d.apellidos }}</small>
+            }
+            @if (doc.invalid && doc.touched) {
+            <small class="err">El código del docente es obligatorio.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="curso">Curso</label>
+            @if (esDocenteEnSesion && cursosSugeridos.length) {
+            <select id="curso" name="curso" required [(ngModel)]="modelo.curso" (ngModelChange)="onCursoChange()">
+              @for (h of cursosSugeridos; track h.curso) {
+              <option [value]="h.curso">
+                {{ h.curso }} ({{ diaEs(h.dia) }} {{ hora(h.horaInicio) }}–{{ hora(h.horaFin) }} · Salón {{ h.aula }})
+              </option>
+              }
+            </select>
+            } @else {
+            <input id="curso" name="curso" type="text" placeholder="Desarrollo Web Integrado" required
+              list="cursosDocente" autocomplete="off" [(ngModel)]="modelo.curso" (ngModelChange)="onCursoChange()" />
+            <datalist id="cursosDocente">
+              @for (h of cursosSugeridos; track h.curso) {
+              <option [value]="h.curso">
+                {{ h.docenteCodigo }} — {{ nombreDocente(h.docenteCodigo) }} ({{ diaEs(h.dia) }} {{ hora(h.horaInicio)
+                }}–{{ hora(h.horaFin) }})
+              </option>
+              }
+            </datalist>
+            }
+            @if (cursoSeleccionadoInfo; as info) {
+            <small class="hint-docente">Titular: {{ info.docenteCodigo }} — {{ nombreDocente(info.docenteCodigo) }} ·
+              Salón habitual: {{ info.aula }}</small>
+            }
+            @if (f.controls['curso']?.invalid && f.controls['curso']?.touched) {
+            <small class="err">El curso es obligatorio.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="fecha">Nueva Fecha</label>
+            <input id="fecha" name="fecha" type="date" required [(ngModel)]="modelo.fecha"
+              (ngModelChange)="guardarBorrador()" #fec="ngModel" />
+            @if (fec.invalid && fec.touched) {
+            <small class="err">Seleccione la fecha.</small>
+            }
+          </div>
+
+          <div class="field-pair">
+            <div class="field">
+              <label for="horaInicio">Hora Inicio</label>
+              <input id="horaInicio" name="horaInicio" type="time" required [(ngModel)]="modelo.horaInicio"
+                (ngModelChange)="guardarBorrador()" #hi="ngModel" />
+              @if (hi.invalid && hi.touched) {
+              <small class="err">Obligatoria.</small>
+              }
+            </div>
+            <div class="field">
+              <label for="horaFin">Hora Fin</label>
+              <input id="horaFin" name="horaFin" type="time" required [(ngModel)]="modelo.horaFin"
+                (ngModelChange)="guardarBorrador()" #hf="ngModel" />
+              @if (hf.invalid && hf.touched) {
+              <small class="err">Obligatoria.</small>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="aula">Salón / Aula (ej. A0102, GS0104, AS101, HS201)</label>
+            <input id="aula" name="aula" type="text" maxlength="8" placeholder="Automático o ej. A0102, AS101"
+              list="salonesList" autocomplete="off" [(ngModel)]="modelo.aula" (ngModelChange)="guardarBorrador()" />
+            <datalist id="salonesList">
+              @for (s of salonesCatalogo; track s) {
+              <option [value]="s">Salón {{ s }} · {{ ubicacionAula(s) }}{{ aforoDeSalon(s) !== null ? ' · Aforo ' + aforoDeSalon(s) : '' }}</option>
+              }
+            </datalist>
+            @if (infoAulaActual) {
+            <small class="hint-docente">{{ infoAulaActual }}{{ aforoSalonActual !== null ? ' · Aforo máx.: ' + aforoSalonActual + ' alumnos' : '' }}</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="motivo">Motivo de Reprogramación</label>
+            <select id="motivo" name="motivo" [(ngModel)]="modelo.motivo" (ngModelChange)="guardarBorrador()">
+              @for (m of motivosCatalogo; track m) {
+              <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- ALERTAS VISUALES EN VIVO (Rango horario, Aula/Sede, Aforo e Intervalo de traslado 15 min) -->
+        <div class="alerts-stack">
+          @if (alertaAula) {
+          <div class="toast-banner toast-danger" role="alert">
+            <div>
+              <strong>Aula o Sede UTP inválida</strong>
+              {{ alertaAula }}
+            </div>
+            <span class="badge badge-danger">SEDE / SÓTANO</span>
+          </div>
+          }
+
+          @if (alertaCapacidadSalon) {
+          <div class="toast-banner toast-danger" role="alert">
+            <div>
+              <strong>Capacidad del salón insuficiente (INSCRITOS &gt; AFORO)</strong>
+              {{ alertaCapacidadSalon }}
+            </div>
+            <span class="badge badge-danger">AFORO</span>
+          </div>
+          }
+
+          @if (alertaRangoHorario) {
+          <div class="toast-banner toast-danger" role="alert">
+            <div>
+              <strong>Horario inválido</strong>
+              {{ alertaRangoHorario }}
+            </div>
+            <span class="badge badge-danger">HORARIO</span>
+          </div>
+          }
+
+          @if (alertaIntervaloTraslado) {
+          <div class="toast-banner toast-danger" role="alert">
+            <div>
+              <strong>⚠ Regla de Traslado Docente (Mínimo 15 minutos)</strong>
+              {{ alertaIntervaloTraslado }}
+            </div>
+            <span class="badge badge-danger">TRASLADO</span>
+          </div>
+          }
+        </div>
+
+        <!-- RESULTADO DE VERIFICAR DISPONIBILIDAD (PORCENTAJE DE ASISTENCIA) -->
+        @if (verificandoDisponibilidad) {
         <div class="loading-state">
           <span class="spinner"></span>
-          <span>Evaluando todas las fechas y franjas horarias según los alumnos matriculados…</span>
+          <span>Calculando porcentaje de asistencia de los alumnos matriculados…</span>
         </div>
-      } @else if (opcionesPaginadas.length) {
-        <div class="table-wrap">
-          <table class="reco-table">
-            <thead>
-              <tr>
-                <th>FECHA</th>
-                <th>DÍA</th>
-                <th>HORARIO</th>
-                <th>SALÓN LIBRE</th>
-                <th>ASISTENCIA ESTIMADA</th>
-                <th>RECOMENDACIÓN</th>
-                <th>ACCIÓN</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (op of opcionesPaginadas; track op.fecha + op.horaInicio) {
-                <tr [class.row-recommended]="op.recomendada">
-                  <td class="bold-cell">{{ fechaEs(op.fecha) }}</td>
-                  <td>{{ diaEs(op.dia) }}</td>
-                  <td>{{ hora(op.horaInicio) }} – {{ hora(op.horaFin) }}</td>
-                  <td>
-                    <div class="aula-reco-cell">
-                      <span class="badge badge-info">{{ op.aulaSugerida }}</span>
-                      <small class="aula-sub-tag" [class.is-sub]="esAulaSubterranea(op.aulaSugerida)">
-                        {{ ubicacionAulaCorta(op.aulaSugerida) }}
-                      </small>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="pct-cell">
-                      <strong>{{ op.porcentajeAsistencia }}%</strong>
-                      <div class="mini-bar">
-                        <div class="mini-fill" [class.low]="!op.recomendada" [style.width.%]="op.porcentajeAsistencia"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    @if (op.recomendada) {
-                      <span class="badge badge-success">✔ Recomendada (&gt; 50%)</span>
-                    } @else {
-                      <span class="badge badge-warning">Asistencia ≤ 50%</span>
-                    }
-                  </td>
-                  <td>
-                    <button type="button" class="btn-use-option" (click)="seleccionarOpcionRecomendada(op)">
-                      Elegir horario
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        }
 
-        <div class="pagination-bar">
-          <span>Mostrando {{ opcionesPaginadas.length }} de {{ opcionesFiltradas.length }} opciones evaluadas</span>
-          <div class="pagination-controls">
-            <button type="button" class="page-btn" [disabled]="paginaOpciones <= 1" (click)="paginaOpciones = paginaOpciones - 1">← Anterior</button>
-            <span class="page-indicator">Página {{ paginaOpciones }} de {{ totalPaginasOpciones }}</span>
-            <button type="button" class="page-btn" [disabled]="paginaOpciones >= totalPaginasOpciones" (click)="paginaOpciones = paginaOpciones + 1">Siguiente →</button>
+        @if (errorDisponibilidad) {
+        <div class="toast-banner toast-danger" role="alert">
+          <div>
+            <strong>Error al verificar disponibilidad</strong>
+            {{ errorDisponibilidad }}
           </div>
         </div>
-      } @else {
-        <p class="empty-reco">Seleccione un docente y un curso para evaluar el porcentaje de asistencia en todas las fechas y horarios disponibles.</p>
-      }
-    </article>
+        }
 
-    <!-- Tabla semanal de disponibilidad de salones de Lunes a Domingo -->
-    <article class="card matrix-card">
-      <header class="card-head matrix-head">
-        <div>
-          <h3>Disponibilidad de Salones de Lunes a Domingo</h3>
-          <span class="card-sub">Salones disponibles en celeste y ocupados en rojo suave. Haz clic en cualquier bloque libre para prellenar el formulario.</span>
-        </div>
-
-        <div class="filter-box">
-          <label for="sedeFiltro">Sede:</label>
-          <select id="sedeFiltro" [(ngModel)]="sedeFiltro" name="sedeFiltro" (ngModelChange)="onSedeFiltroChange()">
-            <option value="TODAS">Todas las sedes (3)</option>
-            @for (se of sedesUtp; track se.clave) {
-              <option [value]="se.clave">{{ se.nombre }} ({{ se.pabellones }})</option>
+        @if (disponibilidadPresencial; as disp) {
+        <div class="disp-card" [class.disp-low]="disp.porcentajeAsistencia <= 50">
+          <div class="disp-head">
+            <strong>Asistencia Estimada de Alumnos Matriculados</strong>
+            @if (disp.porcentajeAsistencia > 50) {
+            <span class="badge badge-success">✔ Recomendada ({{ disp.porcentajeAsistencia }}% &gt; 50%)</span>
+            } @else {
+            <span class="badge badge-warning">⚠ Asistencia baja ({{ disp.porcentajeAsistencia }}% ≤ 50%)</span>
             }
-          </select>
+          </div>
 
-          <label for="salonFiltro">Salón:</label>
-          <select id="salonFiltro" [(ngModel)]="salonFiltro" name="salonFiltro" (ngModelChange)="guardarBorrador()">
-            <option value="TODOS">
-              {{ sedeFiltro === 'TODAS' ? 'Todos los salones principales' : 'Todos los salones de esta sede' }}
-            </option>
-            @for (s of salonesCatalogoFiltrados; track s) {
-              <option [value]="s">Salón {{ s }} · {{ ubicacionAulaCorta(s) }}</option>
+          <div class="pct-bar-wrap">
+            <div class="pct-bar" [class.low]="disp.porcentajeAsistencia <= 50"
+              [style.width.%]="disp.porcentajeAsistencia"></div>
+          </div>
+
+          <p class="disp-note">
+            @if (disp.porcentajeAsistencia > 50) {
+            El <strong>{{ disp.porcentajeAsistencia }}%</strong> de los alumnos matriculados puede asistir en esta fecha
+            y hora. Opción recomendada por el sistema.
+            } @else {
+            Solo el <strong>{{ disp.porcentajeAsistencia }}%</strong> de los alumnos matriculados puede asistir (≤ 50%).
+            Puedes revisar las fechas recomendadas debajo o continuar si deseas elegir esta opción.
             }
-          </select>
-          @if (!filtroEsGeneral || sedeFiltro !== 'TODAS') {
-            <button type="button" class="btn-ver-todos" (click)="verTodosLosSalones()">Ver Todos</button>
+          </p>
+
+          @if (disp.estudiantesConCruce.length) {
+          <p class="disp-cruces">
+            Códigos con cruce en esta franja: <code>{{ disp.estudiantesConCruce.join(', ') }}</code>
+          </p>
           }
         </div>
-      </header>
+        }
 
-      <div class="legend-bar">
-        <span><i class="dot free"></i> Disponible (clic para usar horario y salón)</span>
-        <span><i class="dot busy"></i> No disponible (ocupado por clase regular o recuperación)</span>
-        <span><i class="dot closed"></i> Cerrado (Domingos después de las 02:00 pm)</span>
+        <!-- Disponibilidad de salones en vivo -->
+        @if (tieneFechaYFranja && !alertaRangoHorario) {
+        <div class="live-salones">
+          <div class="live-group">
+            <strong>✔ Salones Disponibles para {{ diaSeleccionadoEs }} {{ hora(modelo.horaInicio) }}–{{
+              hora(modelo.horaFin) }}:</strong>
+            <div class="chip-wrap">
+              @for (s of salonesDisponiblesEnFranja.slice(0, 14); track s) {
+              <button type="button" class="salon-chip ok" [class.active]="modelo.aula?.toUpperCase() === s"
+                (click)="seleccionarSalon(s)">
+                ✔ {{ s }} · {{ ubicacionAulaCorta(s) }}
+              </button>
+              }
+              @if (salonesDisponiblesEnFranja.length > 14) {
+              <span class="more-info">+{{ salonesDisponiblesEnFranja.length - 14 }} salones más</span>
+              }
+            </div>
+          </div>
+
+          @if (salonesOcupadosEnFranja.length) {
+          <div class="live-group">
+            <strong>✖ Salones No Disponibles:</strong>
+            <div class="chip-wrap">
+              @for (o of salonesOcupadosEnFranja; track $index) {
+              <span class="salon-chip busy">✖ {{ o.aula }} ({{ ubicacionAulaCorta(o.aula) }}) · {{ o.curso }} ({{
+                o.docenteCodigo }})</span>
+              }
+            </div>
+          </div>
+          } @else {
+          <p class="all-free">Todos los salones se encuentran libres en esta franja horaria.</p>
+          }
+        </div>
+        }
+
+        @if (estado === 'ok') {
+        <div class="toast-banner toast-success" role="status">
+          <div>
+            <strong>✔ {{ mensaje }}</strong>
+            {{ modelo.docenteCodigo }} · {{ modelo.curso }} · {{ modelo.fecha }} {{ hora(modelo.horaInicio) }}–{{
+            hora(modelo.horaFin) }} {{ modelo.aula ? '· Salón ' + modelo.aula + ' (' + ubicacionAulaCorta(modelo.aula) +
+            ')' : '' }}
+          </div>
+          <button type="button" class="btn btn-success" (click)="irAConfirmacion()">Ir a Confirmación →</button>
+        </div>
+        }
+
+        @if (estado === 'conflicto') {
+        <div class="toast-banner toast-danger" role="alert">
+          <div>
+            <strong>✖ Conflicto de horario o salón detectado (HTTP 400)</strong>
+            {{ mensaje }}
+          </div>
+          <span class="badge badge-danger">ERR-400</span>
+        </div>
+        }
+
+        @if (estado === 'error') {
+        <div class="toast-banner toast-danger" role="alert">
+          <div>
+            <strong>Error de comunicación</strong>
+            {{ mensaje }}
+          </div>
+        </div>
+        }
+
+        <!-- PIE DE FORMULARIO -->
+        <div class="step-footer">
+          <button type="button" class="btn btn-secondary" (click)="regresar()">← Regresar</button>
+
+          <div class="step-footer-right">
+            <button type="button" class="btn btn-secondary" (click)="limpiar(f)">Limpiar</button>
+            <button type="button" class="btn btn-sky" [disabled]="!puedeVerificarDisponibilidad"
+              (click)="verificarDisponibilidad()">
+              {{ verificandoDisponibilidad ? 'Calculando…' : 'Verificar % Asistencia' }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="!formularioListoParaGuardar">
+              {{ estado === 'enviando' ? 'Registrando…' : 'Registrar Reprogramación →' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </article>
+  </div>
+
+  <!-- RECOMENDACIONES DE FECHA Y HORA (TODAS LAS OPCIONES VISIBLES: >50% Y <=50%) -->
+  <article class="card reco-card">
+    <header class="card-head head-sky">
+      <div>
+        <h3>Opciones de Fecha y Hora para Recuperar la Clase (% de Asistencia)</h3>
+        <span class="card-sub">Se recomiendan las opciones con asistencia &gt; 50%, pero se muestran todas las
+          alternativas (altas y bajas).</span>
+      </div>
+      <div class="reco-tabs">
+        <button type="button" class="tab-btn" [class.active]="filtroRecomendacion === 'TODAS'"
+          (click)="cambiarFiltroRecomendacion('TODAS')">
+          Todas
+        </button>
+        <button type="button" class="tab-btn" [class.active]="filtroRecomendacion === 'RECOMENDADAS'"
+          (click)="cambiarFiltroRecomendacion('RECOMENDADAS')">
+          Recomendadas (&gt; 50%)
+        </button>
+        <button type="button" class="tab-btn" [class.active]="filtroRecomendacion === 'BAJAS'"
+          (click)="cambiarFiltroRecomendacion('BAJAS')">
+          Asistencia ≤ 50%
+        </button>
+        <button type="button" class="tab-btn" (click)="cargarRecomendaciones()"
+          [disabled]="cargandoRecomendaciones || !modelo.docenteCodigo || !modelo.curso">
+          {{ cargandoRecomendaciones ? 'Evaluando…' : 'Actualizar' }}
+        </button>
+      </div>
+    </header>
+
+    @if (cargandoRecomendaciones) {
+    <div class="loading-state">
+      <span class="spinner"></span>
+      <span>Evaluando todas las fechas y franjas horarias según los alumnos matriculados…</span>
+    </div>
+    } @else if (opcionesPaginadas.length) {
+    <div class="table-wrap">
+      <table class="reco-table">
+        <thead>
+          <tr>
+            <th>FECHA</th>
+            <th>DÍA</th>
+            <th>HORARIO</th>
+            <th>SALÓN LIBRE</th>
+            <th>ASISTENCIA ESTIMADA</th>
+            <th>RECOMENDACIÓN</th>
+            <th>ACCIÓN</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (op of opcionesPaginadas; track op.fecha + op.horaInicio) {
+          <tr [class.row-recommended]="op.recomendada">
+            <td class="bold-cell">{{ fechaEs(op.fecha) }}</td>
+            <td>{{ diaEs(op.dia) }}</td>
+            <td>{{ hora(op.horaInicio) }} – {{ hora(op.horaFin) }}</td>
+            <td>
+              <div class="aula-reco-cell">
+                <span class="badge badge-info">{{ op.aulaSugerida }}</span>
+                <small class="aula-sub-tag" [class.is-sub]="esAulaSubterranea(op.aulaSugerida)">
+                  {{ ubicacionAulaCorta(op.aulaSugerida) }}
+                </small>
+              </div>
+            </td>
+            <td>
+              <div class="pct-cell">
+                <strong>{{ op.porcentajeAsistencia }}%</strong>
+                <div class="mini-bar">
+                  <div class="mini-fill" [class.low]="!op.recomendada" [style.width.%]="op.porcentajeAsistencia"></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              @if (op.recomendada) {
+              <span class="badge badge-success">✔ Recomendada (&gt; 50%)</span>
+              } @else {
+              <span class="badge badge-warning">Asistencia ≤ 50%</span>
+              }
+            </td>
+            <td>
+              <button type="button" class="btn-use-option" (click)="seleccionarOpcionRecomendada(op)">
+                Elegir horario
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-bar">
+      <span>Mostrando {{ opcionesPaginadas.length }} de {{ opcionesFiltradas.length }} opciones evaluadas</span>
+      <div class="pagination-controls">
+        <button type="button" class="page-btn" [disabled]="paginaOpciones <= 1"
+          (click)="paginaOpciones = paginaOpciones - 1">← Anterior</button>
+        <span class="page-indicator">Página {{ paginaOpciones }} de {{ totalPaginasOpciones }}</span>
+        <button type="button" class="page-btn" [disabled]="paginaOpciones >= totalPaginasOpciones"
+          (click)="paginaOpciones = paginaOpciones + 1">Siguiente →</button>
+      </div>
+    </div>
+    } @else {
+    <p class="empty-reco">Seleccione un docente y un curso para evaluar el porcentaje de asistencia en todas las fechas
+      y horarios disponibles.</p>
+    }
+  </article>
+
+  <!-- Tabla semanal de disponibilidad de salones de Lunes a Domingo -->
+  <article class="card matrix-card">
+    <header class="card-head matrix-head">
+      <div>
+        <h3>Disponibilidad de Salones de Lunes a Domingo</h3>
+        <span class="card-sub">Salones disponibles en celeste y ocupados en rojo suave. Haz clic en cualquier bloque
+          libre para prellenar el formulario.</span>
       </div>
 
-      <div class="sede-chips-ref">
-        @for (se of sedesUtp; track se.clave) {
-          <span class="sede-pill">
-            <strong>{{ se.nombre }}:</strong> Pabellones {{ se.pabellones }} · {{ se.subterraneaDetalle }}
-          </span>
+      <div class="filter-box">
+        <label for="sedeFiltro">Sede:</label>
+        <select id="sedeFiltro" [(ngModel)]="sedeFiltro" name="sedeFiltro" (ngModelChange)="onSedeFiltroChange()">
+          <option value="TODAS">Todas las sedes (3)</option>
+          @for (se of sedesUtp; track se.clave) {
+          <option [value]="se.clave">{{ se.nombre }} ({{ se.pabellones }})</option>
+          }
+        </select>
+
+        <label for="salonFiltro">Salón:</label>
+        <select id="salonFiltro" [(ngModel)]="salonFiltro" name="salonFiltro" (ngModelChange)="guardarBorrador()">
+          <option value="TODOS">
+            {{ sedeFiltro === 'TODAS' ? 'Todos los salones principales' : 'Todos los salones de esta sede' }}
+          </option>
+          @for (s of salonesCatalogoFiltrados; track s) {
+          <option [value]="s">Salón {{ s }} · {{ ubicacionAulaCorta(s) }}</option>
+          }
+        </select>
+        @if (!filtroEsGeneral || sedeFiltro !== 'TODAS') {
+        <button type="button" class="btn-ver-todos" (click)="verTodosLosSalones()">Ver Todos</button>
         }
       </div>
+    </header>
 
-      <div class="matrix-wrap">
-        <table class="salones-table">
-          <thead>
-            <tr>
-              <th>FRANJA HORARIA</th>
-              @for (d of diasSemana; track d.clave) {
-                <th [class.hoy]="d.clave === diaSeleccionado">{{ d.nombre.toUpperCase() }}</th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (fr of franjas; track fr.etiqueta) {
-              <tr>
-                <td class="franja-col">{{ fr.etiqueta }}</td>
-                @for (d of diasSemana; track d.clave) {
-                  <td>
-                    @if (!esFranjaPermitidaEnDia(d.clave, fr)) {
-                      <div class="slot slot-closed">
-                        <strong>Cerrado</strong>
-                        <span>Dom. hasta 14:00</span>
-                      </div>
-                    } @else if (!filtroEsGeneral) {
-                      @if (ocupacionDeSalonEnCelda(salonFiltro, d.clave, fr); as oc) {
-                        <div class="slot slot-busy">
-                          <strong>✖ No disponible</strong>
-                          <span>{{ oc.docenteCodigo }} · {{ oc.curso }}</span>
-                        </div>
-                      } @else {
-                        <button type="button" class="slot slot-free" (click)="seleccionarBloqueDisponible(d.clave, fr, salonFiltro)">
-                          <strong>✔ Disponible</strong>
-                          <span>Usar {{ salonFiltro }}</span>
-                        </button>
-                      }
-                    } @else {
-                      <div class="slot-summary">
-                        @if (salonesPrincipalesDisponibles(d.clave, fr); as disp) {
-                          @if (disp.length) {
-                            <button type="button" class="free-count-btn" (click)="seleccionarBloqueDisponible(d.clave, fr, disp[0])">
-                              ✔ {{ disp.length }} disponibles
-                              <span class="free-list">{{ disp.slice(0, 4).join(', ') }}@if (disp.length > 4) { … }</span>
-                            </button>
-                          } @else {
-                            <span class="busy-tag">Sin aulas libres</span>
-                          }
-                        }
-                        @if (ocupacionesEnCelda(d.clave, fr).length) {
-                          <div class="busy-items">
-                            @for (oc of ocupacionesEnCelda(d.clave, fr).slice(0, 3); track $index) {
-                              <span class="busy-tag">✖ {{ oc.aula }} ({{ oc.docenteCodigo }})</span>
-                            }
-                            @if (ocupacionesEnCelda(d.clave, fr).length > 3) {
-                              <span class="busy-more">+{{ ocupacionesEnCelda(d.clave, fr).length - 3 }} ocupados</span>
-                            }
-                          </div>
-                        }
-                      </div>
-                    }
-                  </td>
-                }
-              </tr>
+    <div class="legend-bar">
+      <span><i class="dot free"></i> Disponible (clic para usar horario y salón)</span>
+      <span><i class="dot busy"></i> No disponible (ocupado por clase regular o recuperación)</span>
+      <span><i class="dot closed"></i> Cerrado (Domingos después de las 02:00 pm)</span>
+    </div>
+
+    <div class="sede-chips-ref">
+      @for (se of sedesUtp; track se.clave) {
+      <span class="sede-pill">
+        <strong>{{ se.nombre }}:</strong> Pabellones {{ se.pabellones }} · {{ se.subterraneaDetalle }}
+      </span>
+      }
+    </div>
+
+    <div class="matrix-wrap">
+      <table class="salones-table">
+        <thead>
+          <tr>
+            <th>FRANJA HORARIA</th>
+            @for (d of diasSemana; track d.clave) {
+            <th [class.hoy]="d.clave === diaSeleccionado">{{ d.nombre.toUpperCase() }}</th>
             }
-          </tbody>
-        </table>
-      </div>
-    </article>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fr of franjas; track fr.etiqueta) {
+          <tr>
+            <td class="franja-col">{{ fr.etiqueta }}</td>
+            @for (d of diasSemana; track d.clave) {
+            <td>
+              @if (!esFranjaPermitidaEnDia(d.clave, fr)) {
+              <div class="slot slot-closed">
+                <strong>Cerrado</strong>
+                <span>Dom. hasta 14:00</span>
+              </div>
+              } @else if (!filtroEsGeneral) {
+              @if (ocupacionDeSalonEnCelda(salonFiltro, d.clave, fr); as oc) {
+              <div class="slot slot-busy">
+                <strong>✖ No disponible</strong>
+                <span>{{ oc.docenteCodigo }} · {{ oc.curso }}</span>
+              </div>
+              } @else {
+              <button type="button" class="slot slot-free"
+                (click)="seleccionarBloqueDisponible(d.clave, fr, salonFiltro)">
+                <strong>✔ Disponible</strong>
+                <span>Usar {{ salonFiltro }}</span>
+              </button>
+              }
+              } @else {
+              <div class="slot-summary">
+                @if (salonesPrincipalesDisponibles(d.clave, fr); as disp) {
+                @if (disp.length) {
+                <button type="button" class="free-count-btn"
+                  (click)="seleccionarBloqueDisponible(d.clave, fr, disp[0])">
+                  ✔ {{ disp.length }} disponibles
+                  <span class="free-list">{{ disp.slice(0, 4).join(', ') }}@if (disp.length > 4) { … }</span>
+                </button>
+                } @else {
+                <span class="busy-tag">Sin aulas libres</span>
+                }
+                }
+                @if (ocupacionesEnCelda(d.clave, fr).length) {
+                <div class="busy-items">
+                  @for (oc of ocupacionesEnCelda(d.clave, fr).slice(0, 3); track $index) {
+                  <span class="busy-tag">✖ {{ oc.aula }} ({{ oc.docenteCodigo }})</span>
+                  }
+                  @if (ocupacionesEnCelda(d.clave, fr).length > 3) {
+                  <span class="busy-more">+{{ ocupacionesEnCelda(d.clave, fr).length - 3 }} ocupados</span>
+                  }
+                </div>
+                }
+              </div>
+              }
+            </td>
+            }
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
   }
 </section>
